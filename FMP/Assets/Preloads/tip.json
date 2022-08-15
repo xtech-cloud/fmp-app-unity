@@ -1,0 +1,13 @@
+{
+    "license_not_found": "未激活",
+    "verify_code_1": "无效的授权文件",
+    "verify_code_2": "授权文件缺少字段",
+    "verify_code_3": "授权文件证书编码错误",
+    "verify_code_4": "授权文件证书解密错误",
+    "verify_code_5": "授权文件签名解码错误",
+    "verify_code_6": "授权文件签名验证错误",
+    "verify_code_7": "授权文件时间戳解析错误",
+    "verify_code_8": "授权文件有效期解析错误",
+    "verify_code_14": "授权文件过期",
+    "expiry_left": "授权将于 ?? 天后过期"
+}

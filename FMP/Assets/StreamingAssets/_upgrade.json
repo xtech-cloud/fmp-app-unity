@@ -1,0 +1,17 @@
+{
+    "update":[
+        {
+            "tip": "依赖文件",
+            "repo": "http://localhost:9000/update.meetouch.dependency/repo-dependency-dev.json"
+        },
+        {
+            "tip": "样式文件",
+            "repo": "http://localhost:9000/update.meetouch.style.dev/repo-style-dev.json"
+        },
+        {
+            "tip": "通用资源",
+            "repo": "http://localhost:9000/update.meex.resource/repo-resource-dev.json"
+        }
+    ]
+
+}

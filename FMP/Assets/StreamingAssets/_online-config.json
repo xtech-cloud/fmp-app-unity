@@ -1,0 +1,9 @@
+{
+    "entry": [{
+        "url": "http://nps.meex.cloud:19080/ogm/config/Text/Read",
+        "path": "/$product$/$sn$/upgrade.json",
+        "apikey": "ogm.dev",
+        "saveAs": "$streamingAssetsPath$/upgrade.json",
+        "encode": ""
+    }]
+}
