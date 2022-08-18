@@ -41,6 +41,10 @@ if "" == version:
     printRed("ERROR: tag is required!!")
     exit(1)
 
+branch_dir = "branch"
+if os.path.exists(".branch"):
+    branch_dir = ".branch"
+
 """
 检测unity是否存在
 """
@@ -56,12 +60,12 @@ if not os.path.exists(unity_home):
     printRed("ERROR: {} not found!".format(unity_home))
     sys.exit(1)
 
-if not os.path.exists(".branch"):
-    printRed("ERROR: directory {} not found!".format(".branch"))
+if not os.path.exists(branch_dir):
+    printRed("ERROR: directory {} not found!".format(branch_dir))
     sys.exit(1)
 
-if not os.path.exists('.branch/deploy.json'):
-    print("ERROR: {} not found!".format('./branch/deploy.json'))
+if not os.path.exists(branch_dir + '/deploy.json'):
+    print("ERROR: {} not found!".format(branch_dir + '/deploy.json'))
     exit(1)
 
 def backup():
@@ -95,10 +99,12 @@ def clean():
     if os.path.exists(package_dir):
         shutil.rmtree(package_dir)
 
-def build(_product, _buildParameter, _bits):
+def build(_company, _product, _buildParameter, _bits):
     printYellow('build {} ...'.format(_product))
     printBlue("-----------------------------------------------------------------------")
+    printBlue("company: {}".format(_company))
     printBlue("product: {}".format(_product))
+    printBlue("builder: {}".format(_buildParameter))
     printBlue("version: {}".format(version))
     printBlue("keystore: {}".format(keystore_path))
     printBlue("curdir: {}".format(current_dir))
@@ -109,56 +115,64 @@ def build(_product, _buildParameter, _bits):
     # 创建中间文件夹
     os.mkdir(tmp_dir)
     os.mkdir(package_dir)
-    # 覆盖分支数据
+    # 删除Unity/Plugins文件夹
+    if os.path.exists("../FMP/Assets/Plugins"):
+        shutil.rmtree("../FMP/Assets/Plugins")
+    # 备份原始数据
     backup()
     printGreen("backup SUCCESS")
 
+    #改写分支的项目设置文件
     projectSettings = ""
-    with open("./.branch/ProjectSettings.asset") as f:
+    with open(branch_dir + "/ProjectSettings.asset") as f:
         projectSettings = f.read()
         f.close()
-
+    projectSettings = projectSettings.replace("{{company}}", _company)
     projectSettings = projectSettings.replace("{{product}}", _product)
     projectSettings = projectSettings.replace("{{version}}", version)
     projectSettings = projectSettings.replace("{{keystore_path}}", keystore_path)
+
+    # 使用分支文件替换项目文件
     with open("../FMP/ProjectSettings/ProjectSettings.asset", "w") as f:
         f.write(projectSettings)
         f.close()
     shutil.copy(
-        "./.branch/{}/icon.png".format(_product),
+        "{}/{}/icon.png".format(branch_dir, _product),
         "../FMP/Assets/AppData/icon.png"
     )
     shutil.copy(
-        "./.branch/{}/BusinessBranch.cs".format(_product),
+        "{}/{}/BusinessBranch.cs".format(branch_dir, _product),
         "../FMP/Assets/Scripts/BusinessBranch.cs",
     )
-    if os.path.exists("./.branch/{}/Packages".format(_product)):
+    if os.path.exists("{}/{}/Packages".format(branch_dir, _product)):
         shutil.copy(
-             "./.branch/{}/Packages/packages-lock.json".format(_product),
+             "{}/{}/Packages/packages-lock.json".format(branch_dir, _product),
              "../FMP/Packages/packages-lock.json")
         shutil.copy(
-             "./.branch/{}/Packages/manifest.json".format(_product),
+             "{}/{}/Packages/manifest.json".format(branch_dir, _product),
              "../FMP/Packages/manifest.json")
-    if os.path.exists("./.branch/{}/Plugins".format(_product)):
+    if os.path.exists("{}/{}/Plugins".format(branch_dir, _product)):
         shutil.copytree(
-            "./.branch/{}/Plugins".format(_product),
+            "{}/{}/Plugins".format(branch_dir, _product),
             "../FMP/Assets/Plugins",
         )
     printGreen("overwrite SUCCESS")
     # 构建
-    os.system("{}/Editor/Unity.exe -quit -batchmode -projectPath ../unitysln/MeeApp -{} {}/_package/{}/application/{}.exe".format(unity_home, _buildParameter, current_dir, _product, _product))
+    os.system("{}/Editor/Unity.exe -quit -batchmode -projectPath ../FMP -{} {}/_package/{}/application/{}.exe".format(unity_home, _buildParameter, current_dir, _product, _product))
     printGreen("compile SUCCESS")
+
+    # 还原原始数据
     restore()
     if os.path.exists("../FMP/Assets/Plugins"):
         shutil.rmtree("../FMP/Assets/Plugins")
-	
     printGreen("restore SUCCESS")
+
     # 打包
     try:
-        pluginsExt = os.path.abspath("./.branch/{}/PluginsExt".format(_product))
+        pluginsExt = os.path.abspath("{}/{}/PluginsExt".format(branch_dir, _product))
         if os.path.exists(pluginsExt):
             for subdir in os.listdir(pluginsExt):
-                shutil.copytree("./.branch/{}/PluginsExt/{}".format(_product, subdir), "./_package/{}/application/{}_Data/Plugins/{}".format(_product, _product,subdir))
+                shutil.copytree("{}/{}/PluginsExt/{}".format(branch_dir, _product, subdir), "./_package/{}/application/{}_Data/Plugins/{}".format(_product, _product,subdir))
     except Exception as e:
         printRed(e)
         clean()
@@ -173,10 +187,11 @@ def build(_product, _buildParameter, _bits):
 if os.path.exists('_output'):
     shutil.rmtree('_output')
     
-with open('deploy.json') as f:
+with open(branch_dir + '/deploy.json') as f:
     targets = json.loads(f.read())
     for target in targets:
         product = target['product']
+        company = target['company']
         if 'win64' == target['platform'].lower():
             buildParameter = "buildWindows64Player"
             bits="64"
@@ -185,4 +200,4 @@ with open('deploy.json') as f:
             bits="86"
         else:
             sys.exit(1)
-        build(product, buildParameter, bits)
+        build(company, product, buildParameter, bits)

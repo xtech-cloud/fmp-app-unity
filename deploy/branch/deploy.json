@@ -1,0 +1,12 @@
+[
+    {
+        "company": "XTC",
+        "product": "FMP",
+        "platform": "Win32"
+    },
+    {
+        "company": "XTC",
+        "product": "FMP",
+        "platform": "Win64"
+    }
+]

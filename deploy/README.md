@@ -7,7 +7,6 @@
   ```
 
 # 添加新应用方法
-1、在.branch中添加新的应用文件名，修改图标文件和license的key和secret。
-2、添加新的repo-XXX.json文件，修改其内容。
-3、在repo-cdn.txt中添加新的地址。
-4、在.branch/deploy.json中添加新的应用选择。
+1、复制branch文件夹为.branch
+2、在.branch中添加新的应用文件名，修改图标文件和license的key和secret。
+3、在.branch/deploy.json中添加新的应用。
