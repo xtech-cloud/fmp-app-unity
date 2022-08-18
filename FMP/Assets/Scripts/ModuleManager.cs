@@ -2,11 +2,28 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Xml.Serialization;
 using UnityEngine;
 using MVCS = XTC.FMP.LIB.MVCS;
 
 public class ModuleManager
 {
+    public class BootStep
+    {
+        [XmlAttribute("length")]
+        public int length = 1;
+        [XmlAttribute("tip")]
+        public string tip = "";
+        [XmlAttribute("module")]
+        public string module = "";
+    }
+
+    public class Bootloader
+    {
+        [XmlArray("Steps"), XmlArrayItem("Step")]
+        public BootStep[] steps { get; set; } = new BootStep[0];
+    }
+
     public class Module
     {
         public Assembly assembly { get; private set; }
@@ -22,16 +39,31 @@ public class ModuleManager
         }
     }
 
+    public Action<int> OnUpgressChanged { get; set; }
+    public Action<string> OnTipChanged { get; set; }
+    public Action OnBootFinish { get; set; }
+
     private Dictionary<string, Module> modules_ = new Dictionary<string, Module>();
     private Dictionary<string, Assembly> assemblies_ = new Dictionary<string, Assembly>();
+    private Bootloader bootloader_ = new Bootloader();
+    private int currentBootStep_ = 0;
+    // 引导的总长度
+    private int totalBootLength_ = 0;
+    // 完成的引导步的长度
+    private int finishedBootLength_ = 0;
+    private Action<int> onBootStepProgress_;
+    private Action<string> onBootStepFinish_;
 
     public ModuleManager()
     {
         AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(assemblyResolve);
+        onBootStepProgress_ = this.handleBootStepProgress;
+        onBootStepFinish_ = this.handleBootStepFinish;
     }
 
     public void Load(string _vendor, string _datapath)
     {
+
         string modulesDir = Path.Combine(_datapath, string.Format("{0}/modules", _vendor));
         Debug.LogFormat("ready to load modules from {0}", modulesDir);
         if (!Directory.Exists(modulesDir))
@@ -57,8 +89,8 @@ public class ModuleManager
 
         Action<string, Assembly> instantiateAssembly = (_entry, _assembly) =>
         {
-            string filename = Path.GetFileName(_entry);
-            string namespacePrefix = filename.Substring(0, filename.Length - ".LIB.Unity.dll".Length);
+            string filename = Path.GetFileNameWithoutExtension(_entry);
+            string namespacePrefix = filename.Substring(0, filename.Length - ".LIB.Unity".Length);
             string entryClassName = namespacePrefix + ".LIB.Unity.MyEntry";
             object instanceEntry = _assembly.CreateInstance(entryClassName);
             Type entryClass = _assembly.GetType(entryClassName);
@@ -66,6 +98,8 @@ public class ModuleManager
             modules_[filename] = module;
             Debug.LogFormat("load assembly {0} success", _entry);
         };
+
+        prepareBootloader(_vendor, _datapath);
 
         Dictionary<string, Assembly> moduleFiles = new Dictionary<string, Assembly>();
         foreach (var file in Directory.GetFiles(modulesDir))
@@ -76,7 +110,15 @@ public class ModuleManager
             var assembly = loadAssembly(file);
             if (file.EndsWith(".LIB.Unity.dll") && file.Contains("FMP.MOD"))
             {
-                moduleFiles[file] = assembly;
+                foreach (var bootstep in bootloader_.steps)
+                {
+                    string filename = Path.GetFileNameWithoutExtension(file);
+                    if (filename.Equals(bootstep.module))
+                    {
+                        moduleFiles[file] = assembly;
+                        break;
+                    }
+                }
             }
         }
 
@@ -99,10 +141,16 @@ public class ModuleManager
 
     public void Inject(MonoBehaviour _mono, MVCS.Framework _framework, MVCS.Logger _logger, MVCS.Config _config, Dictionary<string, MVCS.Any> _settings)
     {
-        foreach (Module module in modules_.Values)
+        foreach (var bootstep in bootloader_.steps)
         {
+            Module module;
+            if (!modules_.TryGetValue(bootstep.module, out module))
+            {
+                Debug.LogErrorFormat("Module {0} not found", bootstep.module);
+                continue;
+            }
             MethodInfo miNewOptions = module.entryClass.GetMethod("NewOptions");
-            var options = miNewOptions.Invoke(module.entryInstance, new object[] {});
+            var options = miNewOptions.Invoke(module.entryInstance, new object[] { });
             MethodInfo miInject = module.entryClass.GetMethod("Inject");
             miInject.Invoke(module.entryInstance, new object[] { _framework, options });
             MethodInfo miUniInject = module.entryClass.GetMethod("UniInject");
@@ -114,8 +162,15 @@ public class ModuleManager
 
     public void Register()
     {
-        foreach (Module module in modules_.Values)
+        foreach (var bootstep in bootloader_.steps)
         {
+            Module module;
+            if (!modules_.TryGetValue(bootstep.module, out module))
+            {
+                Debug.LogErrorFormat("Module {0} not found", bootstep.module);
+                continue;
+            }
+
             MethodInfo miRegister = module.entryClass.GetMethod("RegisterDummy");
             miRegister.Invoke(module.entryInstance, null);
         }
@@ -123,17 +178,26 @@ public class ModuleManager
 
     public void Preload()
     {
-        foreach (Module module in modules_.Values)
+        totalBootLength_ = 0;
+        foreach (var step in bootloader_.steps)
         {
-            MethodInfo miPreload = module.entryClass.GetMethod("Preload");
-            miPreload.Invoke(module.entryInstance, null);
+            totalBootLength_ += step.length;
         }
+
+        executeNextBootStep();
     }
 
     public void Cancel()
     {
-        foreach (Module module in modules_.Values)
+        foreach (var bootstep in bootloader_.steps)
         {
+            Module module;
+            if (!modules_.TryGetValue(bootstep.module, out module))
+            {
+                Debug.LogErrorFormat("Module {0} not found", bootstep.module);
+                continue;
+            }
+
             MethodInfo miCancel = module.entryClass.GetMethod("CancelDummy");
             miCancel.Invoke(module.entryInstance, null);
         }
@@ -143,5 +207,77 @@ public class ModuleManager
     {
         Debug.Log(args.Name);
         return assemblies_[args.Name];
+    }
+
+    private void prepareBootloader(string _vendor, string _datapath)
+    {
+        string config = Path.Combine(_datapath, string.Format("{0}/Bootloader.xml", _vendor));
+        if (!File.Exists(config))
+        {
+            Debug.LogError("Bootloader.xml not found");
+            return;
+        }
+
+        try
+        {
+            var xs = new XmlSerializer(typeof(Bootloader));
+            using (FileStream reader = new FileStream(config, FileMode.Open))
+            {
+                bootloader_ = xs.Deserialize(reader) as Bootloader;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogException(ex);
+        }
+    }
+
+    private void executeNextBootStep()
+    {
+        if (currentBootStep_ >= bootloader_.steps.Length)
+        {
+            Debug.Log("All steps are finished");
+            OnBootFinish();
+            return;
+        }
+
+        BootStep step = bootloader_.steps[currentBootStep_];
+        Debug.LogFormat("Boot the step, module is {0}, tip is {1}", step.module, step.tip);
+        OnTipChanged(step.tip);
+
+        Module module;
+        if (!modules_.TryGetValue(step.module, out module))
+        {
+            Debug.LogErrorFormat("Module {0} not found", step.module);
+            return;
+        }
+
+        MethodInfo miPreload = module.entryClass.GetMethod("Preload");
+        try
+        {
+            miPreload.Invoke(module.entryInstance, new object[] { onBootStepProgress_, onBootStepFinish_ });
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+        }
+    }
+
+
+    private void handleBootStepProgress(int _percentage)
+    {
+        Debug.Log(_percentage);
+    }
+
+    private void handleBootStepFinish(string _module)
+    {
+        Debug.LogFormat("Boot {0} finished", _module);
+        BootStep step = bootloader_.steps[currentBootStep_];
+        finishedBootLength_ += step.length;
+
+        OnUpgressChanged(finishedBootLength_ * 100 / totalBootLength_);
+
+        currentBootStep_ += 1;
+        executeNextBootStep();
     }
 }

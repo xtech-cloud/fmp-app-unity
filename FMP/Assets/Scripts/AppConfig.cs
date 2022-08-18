@@ -37,7 +37,7 @@ public class AppConfig
         public string directory { get; set; } = "";
 
         [XmlAttribute("name")]
-        public string name{ get; set; } = "Default";
+        public string name { get; set; } = "Default";
 
         [XmlElement("Skin")]
         public Skin skin = new Skin();
@@ -86,6 +86,12 @@ public class AppConfig
             public string background { get; set; } = "";
             [XmlAttribute("slogan")]
             public string slogan { get; set; } = "";
+        }
+
+        public class Bootloader
+        {
+            [XmlAttribute("color")]
+            public string color { get; set; } = "#FF7A00FF";
         }
 
         [XmlElement("Splash")]
@@ -197,8 +203,10 @@ public class AppConfig
                 return;
             }
 
-            FileStream reader = new FileStream(file, FileMode.Open);
-            schema_ = xs.Deserialize(reader) as Schema;
+            using (FileStream reader = new FileStream(file, FileMode.Open))
+            {
+                schema_ = xs.Deserialize(reader) as Schema;
+            }
         }
         catch (System.Exception ex)
         {

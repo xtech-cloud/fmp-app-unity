@@ -8,6 +8,9 @@ using MVCS = XTC.FMP.LIB.MVCS;
 public class StartupBehaviour : MonoBehaviour
 {
     public Transform mainCanvas;
+    public GameObject bootloader;
+    public Text textBootloaderTip;
+    public Text textBootloaderUpgress;
     public Font mainFont;
 
     private MVCS.Framework framework;
@@ -20,6 +23,9 @@ public class StartupBehaviour : MonoBehaviour
     void Awake()
     {
         Debug.Log("########### Enter Startup Scene");
+        bootloader.SetActive(true);
+        textBootloaderTip.text = "";
+        textBootloaderUpgress.text = "";
 
         foreach (var vendor in AppConfig.Singleton.body.vendorSelector.vendors)
         {
@@ -55,6 +61,9 @@ public class StartupBehaviour : MonoBehaviour
         // 加载模块
         Dictionary<string, MVCS.Any> settings = new Dictionary<string, MVCS.Any>();
         moduleManager = new ModuleManager();
+        moduleManager.OnTipChanged = (_tip) => textBootloaderTip.text = _tip;
+        moduleManager.OnUpgressChanged = (_percentage) => textBootloaderUpgress.text = _percentage.ToString();
+        moduleManager.OnBootFinish = () => bootloader.SetActive(false);
         settings["vendor"] = MVCS.Any.FromString(activeVendor_.directory);
         settings["datapath"] = MVCS.Any.FromString(datapath);
         settings["devicecode"] = MVCS.Any.FromString(Constant.DeviceCode);
