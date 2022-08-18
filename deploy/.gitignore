@@ -1,0 +1,6 @@
+_package/
+_tmp/
+_output/
+.branch/
+.publish-log.md
+.UNITY_HOME.env
