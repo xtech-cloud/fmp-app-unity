@@ -32,24 +32,6 @@ public class LauncherBehaviour : MonoBehaviour
 
     void Start()
     {
-        if (Application.platform == RuntimePlatform.WindowsEditor)
-        {
-            StartCoroutine(enterStartup(false));
-            return;
-        }
-    }
-
-    private IEnumerator enterStartup(bool _delay)
-    {
-        if (_delay)
-        {
-            yield return new WaitForSeconds(3.0f);
-        }
-        else
-        {
-            yield return new WaitForSeconds(1.0f);
-        }
-
         // 如果命令参数和配置文件均没有指定vendor，跳转到vendor选择场景
         if (string.IsNullOrEmpty(VendorManager.Singleton.active))
             SceneManager.LoadScene("selector");
