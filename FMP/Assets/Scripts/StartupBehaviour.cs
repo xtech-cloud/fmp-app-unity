@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using MVCS = XTC.FMP.LIB.MVCS;
 
-public class Startup : MonoBehaviour
+public class StartupBehaviour : MonoBehaviour
 {
     public Transform mainCanvas;
 
@@ -13,41 +13,39 @@ public class Startup : MonoBehaviour
     private MVCS.Logger logger;
     private MVCS.Config config;
     private ModuleManager moduleManager;
+    private AppConfig.Vendor activeVendor_;
 
     // Start is called before the first frame update
     void Awake()
     {
-        string vendor = "data";
-        string datapath = Application.persistentDataPath;
-        // 解析参数
-        string[] commandLineArgs = System.Environment.GetCommandLineArgs();
-        foreach (string arg in commandLineArgs)
+        Debug.Log("########### Enter Startup Scene");
+
+        foreach (var vendor in AppConfig.Singleton.body.vendorSelector.vendors)
         {
-            if (arg.StartsWith("-vendor="))
+            if (vendor.directory.Equals(AppConfig.Singleton.body.vendorSelector.active))
             {
-                vendor = arg.Replace("-vendor=", "").Trim();
-            }
-            else if (arg.StartsWith("-datapath="))
-            {
-                datapath = arg.Replace("-datapath=", "").Trim();
+                activeVendor_ = vendor;
+                break;
             }
         }
-        Debug.LogFormat("Vendor is {0}", vendor);
+
+        string datapath = Application.persistentDataPath;
 
         var canvasScaler = mainCanvas.GetComponent<CanvasScaler>();
-        canvasScaler.referenceResolution = new Vector2(AppConfig.instance.schema.resolution.width, AppConfig.instance.schema.resolution.height);
-        canvasScaler.matchWidthOrHeight = AppConfig.instance.schema.resolution.match;
+        canvasScaler.referenceResolution = new Vector2(
+            activeVendor_.graphics.referenceResolution.width,
+            activeVendor_.graphics.referenceResolution.height
+        );
+        canvasScaler.matchWidthOrHeight = activeVendor_.graphics.referenceResolution.match;
+
 
         // 初始化MVCS框架
         FileConfig fileConfig = new FileConfig();
-        fileConfig.Load(datapath, vendor);
+        fileConfig.Load(datapath, activeVendor_.directory);
         UnityLogger uniLogger = new UnityLogger();
         logger = uniLogger;
-        logger.setLevel((MVCS.LogLevel)AppConfig.instance.schema.loglevel);
-        string errLogFile = Path.Combine(datapath, "err.log");
-        uniLogger.errorFile = errLogFile;
+        logger.setLevel((MVCS.LogLevel)AppConfig.Singleton.body.logger.level);
         config = fileConfig;
-        uniLogger.OpenLogFiles();
         framework = new MVCS.Framework();
         framework.setLogger(logger);
         framework.setConfig(config);
@@ -56,12 +54,12 @@ public class Startup : MonoBehaviour
         // 加载模块
         Dictionary<string, MVCS.Any> settings = new Dictionary<string, MVCS.Any>();
         moduleManager = new ModuleManager();
-        settings["vendor"] = MVCS.Any.FromString(vendor);
+        settings["vendor"] = MVCS.Any.FromString(activeVendor_.directory);
         settings["datapath"] = MVCS.Any.FromString(datapath);
         settings["devicecode"] = MVCS.Any.FromString(Constant.DeviceCode);
         settings["main.canvas"] = MVCS.Any.FromObject(mainCanvas);
         settings["platform"] = MVCS.Any.FromString(Constant.Platform);
-        moduleManager.Load(vendor, datapath);
+        moduleManager.Load(activeVendor_.directory, datapath);
         // 注册模块中的MVCS
         moduleManager.Inject(this, framework, logger, config, settings);
         moduleManager.Register();
@@ -94,7 +92,7 @@ public class Startup : MonoBehaviour
     void OnDestroy()
     {
         Debug.Log("---------------  OnDestroy ------------------------");
-        
+
         framework.Dismantle();
         // 拆卸模块中的MVCS
         moduleManager.Cancel();
@@ -102,6 +100,5 @@ public class Startup : MonoBehaviour
         framework = null;
 
         moduleManager.Unload();
-        (logger as UnityLogger).CloseLogFiles();
     }
 }

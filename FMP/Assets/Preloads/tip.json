@@ -9,5 +9,7 @@
     "verify_code_7": "授权文件时间戳解析错误",
     "verify_code_8": "授权文件有效期解析错误",
     "verify_code_14": "授权文件过期",
-    "expiry_left": "授权将于 ?? 天后过期"
+    "expiry_left": "授权将于 ?? 天后过期",
+    "vendor_active_none": "没有激活的虚拟环境",
+    "vendor_directory_none": "虚拟环境的文件夹未找到"
 }
