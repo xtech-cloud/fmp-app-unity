@@ -457,6 +457,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainCanvas: {fileID: 649389020}
+  mainFont: {fileID: 12800000, guid: ab4cff4a67eaed049a564bd4180b1767, type: 3}
 --- !u!114 &1141919680
 MonoBehaviour:
   m_ObjectHideFlags: 0

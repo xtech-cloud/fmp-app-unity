@@ -8,6 +8,7 @@ using MVCS = XTC.FMP.LIB.MVCS;
 public class StartupBehaviour : MonoBehaviour
 {
     public Transform mainCanvas;
+    public Font mainFont;
 
     private MVCS.Framework framework;
     private MVCS.Logger logger;
@@ -57,8 +58,9 @@ public class StartupBehaviour : MonoBehaviour
         settings["vendor"] = MVCS.Any.FromString(activeVendor_.directory);
         settings["datapath"] = MVCS.Any.FromString(datapath);
         settings["devicecode"] = MVCS.Any.FromString(Constant.DeviceCode);
-        settings["main.canvas"] = MVCS.Any.FromObject(mainCanvas);
         settings["platform"] = MVCS.Any.FromString(Constant.Platform);
+        settings["main.canvas"] = MVCS.Any.FromObject(mainCanvas);
+        settings["main.font"] = MVCS.Any.FromObject(mainFont);
         moduleManager.Load(activeVendor_.directory, datapath);
         // 注册模块中的MVCS
         moduleManager.Inject(this, framework, logger, config, settings);
