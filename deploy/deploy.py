@@ -99,7 +99,7 @@ def clean():
     if os.path.exists(package_dir):
         shutil.rmtree(package_dir)
 
-def build(_company, _product, _buildParameter, _bits):
+def build(_company, _product, _buildParameter, _bits, _output):
     printYellow('build {} ...'.format(_product))
     printBlue("-----------------------------------------------------------------------")
     printBlue("company: {}".format(_company))
@@ -177,7 +177,7 @@ def build(_company, _product, _buildParameter, _bits):
         printRed(e)
         clean()
         sys.exit(1)
-    os.system("{}/7z/7z.exe a {}\_output\{}_v{}_x{}.zip .\_package\*".format(current_dir, current_dir, _product, version, _bits))
+    os.system("{}/7z/7z.exe a {}\_output\{}_v{}.zip .\_package\*".format(current_dir, current_dir, _output, version))
     printGreen("archive SUCCESS")
     # 删除中间文件夹
     clean()
@@ -192,6 +192,7 @@ with open(branch_dir + '/deploy.json') as f:
     for target in targets:
         product = target['product']
         company = target['company']
+        output = target['output']
         if 'win64' == target['platform'].lower():
             buildParameter = "buildWindows64Player"
             bits="64"
@@ -200,4 +201,4 @@ with open(branch_dir + '/deploy.json') as f:
             bits="86"
         else:
             sys.exit(1)
-        build(company, product, buildParameter, bits)
+        build(company, product, buildParameter, bits, output)

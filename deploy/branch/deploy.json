@@ -2,11 +2,13 @@
     {
         "company": "XTC",
         "product": "FMP",
-        "platform": "Win32"
+        "platform": "Win32",
+        "output": "XTC_FMP_x86"
     },
     {
         "company": "XTC",
         "product": "FMP",
-        "platform": "Win64"
+        "platform": "Win64",
+        "output": "XTC_FMP_x64"
     }
 ]
