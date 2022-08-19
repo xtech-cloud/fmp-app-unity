@@ -176,13 +176,14 @@ def build(_company, _product, _buildParameter, _bits, _output):
             "../FMP/Assets/Plugins",
         )
     printGreen("overwrite SUCCESS")
+    printYellow("build ... ")
     # 构建
     os.system(
         "{}/Editor/Unity.exe -quit -batchmode -projectPath ../FMP -{} {}/_package/{}/application/{}.exe".format(
             unity_home, _buildParameter, current_dir, _product, _product
         )
     )
-    printGreen("compile SUCCESS")
+    printGreen("build SUCCESS")
 
     # 还原原始数据
     restore()
