@@ -22,7 +22,7 @@ public class StartupBehaviour : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
-        Debug.Log("########### Enter Startup Scene");
+        UnityLogger.Singleton.Info("########### Enter Startup Scene");
         bootloader.SetActive(true);
         textBootloaderTip.text = "";
         textBootloaderUpgress.text = "";
@@ -36,7 +36,6 @@ public class StartupBehaviour : MonoBehaviour
             }
         }
 
-        string datapath = Application.persistentDataPath;
 
         var canvasScaler = mainCanvas.GetComponent<CanvasScaler>();
         canvasScaler.referenceResolution = new Vector2(
@@ -48,7 +47,7 @@ public class StartupBehaviour : MonoBehaviour
 
         // 初始化MVCS框架
         FileConfig fileConfig = new FileConfig();
-        fileConfig.Load(datapath, activeVendor_.directory);
+        fileConfig.Load(Constant.DataPath, activeVendor_.directory);
         UnityLogger uniLogger = new UnityLogger();
         logger = uniLogger;
         logger.setLevel((MVCS.LogLevel)AppConfig.Singleton.body.logger.level);
@@ -65,12 +64,12 @@ public class StartupBehaviour : MonoBehaviour
         moduleManager.OnUpgressChanged = (_percentage) => textBootloaderUpgress.text = _percentage.ToString();
         moduleManager.OnBootFinish = () => bootloader.SetActive(false);
         settings["vendor"] = MVCS.Any.FromString(activeVendor_.directory);
-        settings["datapath"] = MVCS.Any.FromString(datapath);
+        settings["datapath"] = MVCS.Any.FromString(Constant.DataPath);
         settings["devicecode"] = MVCS.Any.FromString(Constant.DeviceCode);
         settings["platform"] = MVCS.Any.FromString(Constant.Platform);
         settings["main.canvas"] = MVCS.Any.FromObject(mainCanvas);
         settings["main.font"] = MVCS.Any.FromObject(mainFont);
-        moduleManager.Load(activeVendor_.directory, datapath);
+        moduleManager.Load(activeVendor_.directory, Constant.DataPath);
         // 注册模块中的MVCS
         moduleManager.Inject(this, framework, logger, config, settings);
         moduleManager.Register();
@@ -81,12 +80,12 @@ public class StartupBehaviour : MonoBehaviour
 
     void OnEnable()
     {
-        Debug.Log("---------------  OnEnable ------------------------");
+        UnityLogger.Singleton.Info("---------------  OnEnable ------------------------");
     }
 
     IEnumerator Start()
     {
-        Debug.Log("---------------  Start ------------------------");
+        UnityLogger.Singleton.Info("---------------  Start ------------------------");
         yield return new WaitForEndOfFrame();
         moduleManager.Preload();
     }
@@ -97,12 +96,12 @@ public class StartupBehaviour : MonoBehaviour
 
     void OnDisable()
     {
-        Debug.Log("---------------  OnDisable ------------------------");
+        UnityLogger.Singleton.Info("---------------  OnDisable ------------------------");
     }
 
     void OnDestroy()
     {
-        Debug.Log("---------------  OnDestroy ------------------------");
+        UnityLogger.Singleton.Info("---------------  OnDestroy ------------------------");
 
         framework.Dismantle();
         // 拆卸模块中的MVCS

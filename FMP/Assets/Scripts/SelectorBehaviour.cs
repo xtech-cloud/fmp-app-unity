@@ -13,7 +13,7 @@ public class SelectorBehaviour : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log("########### Enter Selector Scene");
+        UnityLogger.Singleton.Info("########### Enter Selector Scene");
 
         templateVendor.gameObject.SetActive(false);
         foreach (var vendor in AppConfig.Singleton.body.vendorSelector.vendors)

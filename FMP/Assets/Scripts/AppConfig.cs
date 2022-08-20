@@ -189,7 +189,7 @@ public class AppConfig
     {
         try
         {
-            string file = Path.Combine(Application.persistentDataPath, "AppConfig.xml");
+            string file = Path.Combine(Constant.DataPath, "AppConfig.xml");
 
             var xs = new XmlSerializer(typeof(Schema));
             // 如果文件不存在，则创建默认的配置文件
@@ -210,7 +210,7 @@ public class AppConfig
         }
         catch (System.Exception ex)
         {
-            Debug.LogException(ex);
+            UnityLogger.Singleton.Exception(ex);
         }
     }
 }

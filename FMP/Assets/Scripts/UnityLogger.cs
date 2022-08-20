@@ -2,6 +2,9 @@
 
 public class UnityLogger : Logger
 {
+    public static UnityLogger Singleton { get; private set; } = new UnityLogger();
+
+
     protected override void trace(string _categoray, string _message)
     {
         UnityEngine.Debug.Log(string.Format("<color=#02cbac>TRACE</color> [{0}] - {1}", _categoray, _message));

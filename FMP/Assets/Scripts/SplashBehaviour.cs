@@ -44,7 +44,7 @@ public class SplashBehaviour : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
-        Debug.Log("########### Enter Splash Scene");
+        UnityLogger.Singleton.Info("########### Enter Splash Scene");
 
         txtVersion.text = "ver " + Application.version;
 
@@ -81,7 +81,7 @@ public class SplashBehaviour : MonoBehaviour
     {
         txtError.text = "";
         string deviceCode = Constant.DeviceCode;
-        Debug.LogFormat("deviceCode: {0}", deviceCode);
+        UnityLogger.Singleton.Info("deviceCode: {0}", deviceCode);
         applyDeviceCode(deviceCode);
 
         if (Application.platform == RuntimePlatform.WindowsEditor)
@@ -90,7 +90,7 @@ public class SplashBehaviour : MonoBehaviour
             return;
         }
 
-        string licenseFile = Path.Combine(Application.persistentDataPath, "app.cer");
+        string licenseFile = Path.Combine(Constant.DataPath, "app.cer");
         if (!File.Exists(licenseFile))
         {
             txtError.text = uiTip_.license_not_found;
@@ -138,7 +138,7 @@ public class SplashBehaviour : MonoBehaviour
             yield break;
         }
 
-        if (!Directory.Exists(Path.Combine(Application.persistentDataPath, activeVendor_.directory)))
+        if (!Directory.Exists(Path.Combine(Constant.DataPath, activeVendor_.directory)))
         {
             txtError.text = uiTip_.vendor_directory_none;
             yield break;
@@ -165,7 +165,7 @@ public class SplashBehaviour : MonoBehaviour
         texture.Apply();
         imgQRCode.texture = texture;
 
-        File.WriteAllText(Path.Combine(Application.persistentDataPath, "sn.out"), _code);
+        //File.WriteAllText(Path.Combine(Constant.DataPath, "sn.out"), _code);
     }
 
     private bool verifyLicense(string _file, string _deviceCode, out int _verifyCode, out int _expiry, out long _timestamp)
@@ -229,13 +229,13 @@ public class SplashBehaviour : MonoBehaviour
             if (!int.TryParse(str[1], out height))
                 height = resolution.height;
         }
-        Debug.LogFormat("adjust resolution to {0}x{1}", width, height);
+        UnityLogger.Singleton.Info("adjust resolution to {0}x{1}", width, height);
         Screen.SetResolution(width, height, true);
     }
 
     private void loadSprite(string _file, Image _image)
     {
-        string path = Path.Combine(Application.persistentDataPath, VendorManager.Singleton.active);
+        string path = Path.Combine(Constant.DataPath, VendorManager.Singleton.active);
         path = Path.Combine(path, _file);
         if (!File.Exists(path))
             return;

@@ -7,10 +7,10 @@ public class FileConfig : Config
     {
         string dir_path = Path.Combine(_datapath, _vendor);
         dir_path = Path.Combine(dir_path, "configs");
-        UnityEngine.Debug.LogFormat("ready to load config from {0}", dir_path);
+        UnityLogger.Singleton.Debug("ready to load config from {0}", dir_path);
         if (!Directory.Exists(dir_path))
         {
-            UnityEngine.Debug.LogErrorFormat("{0} not found", dir_path);
+            UnityLogger.Singleton.Error("{0} not found", dir_path);
             return;
         }
 
@@ -20,7 +20,7 @@ public class FileConfig : Config
             string filename = Path.GetFileNameWithoutExtension(file);
             string key = Path.GetFileNameWithoutExtension(filename);
             fields_[key] = Any.FromString(contents);
-            UnityEngine.Debug.LogFormat("save config from {0}", key);
+            UnityLogger.Singleton.Trace("save config from {0}", key);
         }
 
     }

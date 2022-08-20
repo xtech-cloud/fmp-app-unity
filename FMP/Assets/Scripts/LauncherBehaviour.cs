@@ -8,7 +8,7 @@ public class LauncherBehaviour : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
-        Debug.Log("########### Enter Launcher Scene");
+        UnityLogger.Singleton.Info("########### Enter Launcher Scene");
 
         // 加载配置文件
         AppConfig.Singleton.Load();

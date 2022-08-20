@@ -65,10 +65,10 @@ public class ModuleManager
     {
 
         string modulesDir = Path.Combine(_datapath, string.Format("{0}/modules", _vendor));
-        Debug.LogFormat("ready to load modules from {0}", modulesDir);
+        UnityLogger.Singleton.Info("ready to load modules from {0}", modulesDir);
         if (!Directory.Exists(modulesDir))
         {
-            Debug.LogWarningFormat("{0} not found", modulesDir);
+            UnityLogger.Singleton.Error("{0} not found", modulesDir);
             return;
         }
 
@@ -78,7 +78,7 @@ public class ModuleManager
             Assembly assembly = Assembly.LoadFile(file);
             if (null == assembly)
             {
-                Debug.LogErrorFormat("load assembly from {0} failed!", file);
+                UnityLogger.Singleton.Error("load assembly from {0} failed!", file);
                 return null;
             }
 
@@ -96,7 +96,7 @@ public class ModuleManager
             Type entryClass = _assembly.GetType(entryClassName);
             Module module = new Module(_assembly, instanceEntry, entryClass, namespacePrefix);
             modules_[filename] = module;
-            Debug.LogFormat("load assembly {0} success", _entry);
+            UnityLogger.Singleton.Info("load assembly {0} success", _entry);
         };
 
         prepareBootloader(_vendor, _datapath);
@@ -106,7 +106,7 @@ public class ModuleManager
         {
             if (!file.EndsWith(".dll"))
                 continue;
-            Debug.LogFormat("found {0}", file);
+            UnityLogger.Singleton.Debug("found {0}", file);
             var assembly = loadAssembly(file);
             if (file.EndsWith(".LIB.Unity.dll") && file.Contains("FMP.MOD"))
             {
@@ -128,7 +128,7 @@ public class ModuleManager
             instantiateAssembly(pair.Key, pair.Value);
         }
 
-        Debug.LogFormat("finally load {0} modules", modules_.Count);
+        UnityLogger.Singleton.Info("finally load {0} modules", modules_.Count);
     }
 
     public void Unload()
@@ -146,7 +146,7 @@ public class ModuleManager
             Module module;
             if (!modules_.TryGetValue(bootstep.module, out module))
             {
-                Debug.LogErrorFormat("Module {0} not found", bootstep.module);
+                UnityLogger.Singleton.Error("Module {0} not found", bootstep.module);
                 continue;
             }
             MethodInfo miNewOptions = module.entryClass.GetMethod("NewOptions");
@@ -167,7 +167,7 @@ public class ModuleManager
             Module module;
             if (!modules_.TryGetValue(bootstep.module, out module))
             {
-                Debug.LogErrorFormat("Module {0} not found", bootstep.module);
+                UnityLogger.Singleton.Error("Module {0} not found", bootstep.module);
                 continue;
             }
 
@@ -194,7 +194,7 @@ public class ModuleManager
             Module module;
             if (!modules_.TryGetValue(bootstep.module, out module))
             {
-                Debug.LogErrorFormat("Module {0} not found", bootstep.module);
+                UnityLogger.Singleton.Error("Module {0} not found", bootstep.module);
                 continue;
             }
 
@@ -205,7 +205,7 @@ public class ModuleManager
 
     private Assembly assemblyResolve(object sender, ResolveEventArgs args)
     {
-        Debug.Log(args.Name);
+        //Debug.Log(args.Name);
         return assemblies_[args.Name];
     }
 
@@ -214,7 +214,7 @@ public class ModuleManager
         string config = Path.Combine(_datapath, string.Format("{0}/Bootloader.xml", _vendor));
         if (!File.Exists(config))
         {
-            Debug.LogError("Bootloader.xml not found");
+            UnityLogger.Singleton.Error("Bootloader.xml not found");
             return;
         }
 
@@ -228,7 +228,7 @@ public class ModuleManager
         }
         catch (System.Exception ex)
         {
-            Debug.LogException(ex);
+            UnityLogger.Singleton.Exception(ex);
         }
     }
 
@@ -236,19 +236,19 @@ public class ModuleManager
     {
         if (currentBootStep_ >= bootloader_.steps.Length)
         {
-            Debug.Log("All steps are finished");
+            UnityLogger.Singleton.Info("All steps are finished");
             OnBootFinish();
             return;
         }
 
         BootStep step = bootloader_.steps[currentBootStep_];
-        Debug.LogFormat("Boot the step, module is {0}, tip is {1}", step.module, step.tip);
+        UnityLogger.Singleton.Info("Boot the step, module is {0}, tip is {1}", step.module, step.tip);
         OnTipChanged(step.tip);
 
         Module module;
         if (!modules_.TryGetValue(step.module, out module))
         {
-            Debug.LogErrorFormat("Module {0} not found", step.module);
+            UnityLogger.Singleton.Error("Module {0} not found", step.module);
             return;
         }
 
@@ -259,19 +259,19 @@ public class ModuleManager
         }
         catch (Exception ex)
         {
-            Debug.LogException(ex);
+            UnityLogger.Singleton.Exception(ex);
         }
     }
 
 
     private void handleBootStepProgress(int _percentage)
     {
-        Debug.Log(_percentage);
+        //Debug.Log(_percentage);
     }
 
     private void handleBootStepFinish(string _module)
     {
-        Debug.LogFormat("Boot {0} finished", _module);
+        UnityLogger.Singleton.Info("Boot {0} finished", _module);
         BootStep step = bootloader_.steps[currentBootStep_];
         finishedBootLength_ += step.length;
 

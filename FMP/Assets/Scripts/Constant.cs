@@ -37,7 +37,7 @@ public class Constant
                     .Append(SystemInfo.processorCount + "\n")
                     .Append(SystemInfo.processorType + "\n");
 
-                Debug.Log(sb.ToString());
+                UnityLogger.Singleton.Info(sb.ToString());
                 MD5CryptoServiceProvider md5Hasher = new MD5CryptoServiceProvider();
                 byte[] bytes = md5Hasher.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString()));
                 StringBuilder tmp = new StringBuilder();
@@ -52,7 +52,7 @@ public class Constant
         }
     }
 
-    public static string Vendor = "data";
+    public static string DataPath = Application.persistentDataPath;
 
     private static string devicecode_ = "";
 }
