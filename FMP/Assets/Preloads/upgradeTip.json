@@ -1,0 +1,6 @@
+{
+    "upgrade_parse_failed": "更新文件解析失败",
+    "dependencies_update_tip": "依赖库检测到有 {0} 更新，是否现在开始更新？",
+    "dependencies_error": "依赖库更新出现错误，错误码：\n{0}",
+    "downloading_tip": "正在下载：{0}"
+}
