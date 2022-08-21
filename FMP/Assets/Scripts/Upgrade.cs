@@ -175,6 +175,10 @@ public class Upgrade
             uabFileTask.url = string.Format("{0}/{1}_{2}{3}.uab", address, reference.org.ToLower(), reference.module.ToLower(), getPlatformSuffix());
             uabFileTask.saveAs = string.Format("uabs/{0}_{1}.uab", reference.org.ToLower(), reference.module.ToLower());
             task.files.Add(uabFileTask);
+            FileTask xmlFileTask = new FileTask();
+            xmlFileTask.url = string.Format("{0}/{1}_{2}.xml", address, reference.org, reference.module);
+            xmlFileTask.saveAs = string.Format("configs/_{0}_{1}.xml", reference.org, reference.module);
+            task.files.Add(xmlFileTask);
             referenceTaskQueue_.Add(task);
         }
     }
