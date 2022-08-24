@@ -146,10 +146,10 @@ public class Upgrade
             if (_schema.body.update.fmp.environment.Equals("develop"))
                 version = "develop";
 
-            string address = string.Format("{0}/{1}/{2}@{3}", _schema.body.update.fmp.repository, reference.org, reference.module, version);
+            string address = string.Format("{0}/modules/{1}/{2}@{3}", _schema.body.update.fmp.repository, reference.org, reference.module, version);
 
             var manifestTask = new ManifestTask();
-            manifestTask.url = string.Format("{0}/md5.json", address);
+            manifestTask.url = string.Format("{0}/manifest.json", address);
             manifestTasks_.Add(manifestTask);
 
             var bridgeTask = new FileTask();
@@ -189,10 +189,10 @@ public class Upgrade
             if (_schema.body.update.fmp.environment.Equals("develop"))
                 version = "develop";
 
-            string address = string.Format("{0}/__plugins__/{1}@{2}", _schema.body.update.fmp.repository, plugin.name, version);
+            string address = string.Format("{0}/plugins/{1}@{2}", _schema.body.update.fmp.repository, plugin.name, version);
 
             var manifestTask = new ManifestTask();
-            manifestTask.url = string.Format("{0}/md5.json", address);
+            manifestTask.url = string.Format("{0}/manifest.json", address);
             manifestTasks_.Add(manifestTask);
 
             var dllTask = new FileTask();
