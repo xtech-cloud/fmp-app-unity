@@ -62,7 +62,7 @@ public class SplashBehaviour : MonoBehaviour
 
         foreach (var vendor in AppConfig.Singleton.body.vendorSelector.vendors)
         {
-            if (vendor.scope.Equals(AppConfig.Singleton.body.vendorSelector.active))
+            if (vendor.scope.Equals(VendorManager.Singleton.active))
             {
                 activeVendor_ = vendor;
                 break;

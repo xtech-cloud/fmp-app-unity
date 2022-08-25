@@ -33,7 +33,7 @@ public class SelectorBehaviour : MonoBehaviour
             clone.gameObject.SetActive(true);
             clone.GetComponent<Button>().onClick.AddListener(() =>
             {
-                AppConfig.Singleton.body.vendorSelector.active = clone.name;
+                VendorManager.Singleton.active = clone.name;
                 SceneManager.LoadScene("splash");
             });
         }
