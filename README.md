@@ -46,6 +46,7 @@ UnityApp是一个母体应用，不推荐在生产环境中使用。
 UnityApp的生命周期为启动（Launcher）、选择（Selector）、过场（Splash）、升级（Upgrade）、开始（Startup）五个阶段。
 
 - 启动阶段
+
   此阶段完成以下工作：
   - 加载应用配置文件，如果不存在，创建一个默认的配置文件存放到数据持久化路径下。
   - 解析命令行参数，如果指定了vendor，使用此参数值作为激活的vendor。
@@ -53,11 +54,13 @@ UnityApp的生命周期为启动（Launcher）、选择（Selector）、过场�
   - 进入选择阶段。
 
 - 选择阶段
+
   此阶段完成以下工作：
   - 如果有激活的vendor，直接进入过场阶段。
   - 如果没有激活的vendor，显示选择界面后等待用户选择后进入过场阶段。
 
 - 过场阶段
+
   此阶段完成以下工作：
   - 加载激活的vendor的皮肤。
   - 根据应用配置文件调整画质。
@@ -65,6 +68,7 @@ UnityApp的生命周期为启动（Launcher）、选择（Selector）、过场�
   - 根据许可证状态决定是否进入升级阶段。
 
 - 升级阶段
+
   此阶段完成以下工作：
   - 根据vendor中的更新配置文件中的更新策略进行升级。
   - 升级过程会将所有的更新文件存放到临时文件夹中。
@@ -73,6 +77,7 @@ UnityApp的生命周期为启动（Launcher）、选择（Selector）、过场�
   - 进入开始阶段。
 
 - 开始阶段
+
   此阶段完成以下工作：
   - 使用应用配置文件中的配置，调整界面适配。
   - 初始化FMP-MVCS框架。
@@ -130,10 +135,10 @@ UnityApp的生命周期为启动（Launcher）、选择（Selector）、过场�
 
 ### 添加衍生应用
 
-1、进入deploy文件夹
-2、复制branch文件夹为.branch
-3、在.branch中添加新的应用文件名，修改图标文件和license的key和secret。
-4、在.branch/deploy.json中添加新的衍生应用应用。
+1. 进入deploy文件夹
+2. 复制branch文件夹为.branch
+3. 在.branch中添加新的应用文件名，修改图标文件和license的key和secret。
+4. 在.branch/deploy.json中添加新的衍生应用应用。
 
 ### 构建
 
