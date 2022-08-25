@@ -123,37 +123,16 @@ public class UpgradeBehaviour : MonoBehaviour
 
     private IEnumerator Start()
     {
-        string vendorDir = Path.Combine(Constant.DataPath, VendorManager.Singleton.active);
-        string upgradeConfigFile = Path.Combine(vendorDir, "Upgrade.xml");
-
-        var xs = new XmlSerializer(typeof(Upgrade.Schema));
-        // 如果文件不存在，则创建默认的配置文件
-        if (!File.Exists(upgradeConfigFile))
+        // Browser 不更新，在模块加载时下载
+        if (RuntimePlatform.WebGLPlayer == Application.platform)
         {
-            schema_ = new Upgrade.Schema();
-            using (FileStream writer = new FileStream(upgradeConfigFile, FileMode.CreateNew))
-            {
-                xs.Serialize(writer, schema_);
-                writer.Close();
-            }
-        }
-
-        try
-        {
-            using (FileStream reader = new FileStream(upgradeConfigFile, FileMode.Open))
-            {
-                schema_ = xs.Deserialize(reader) as Upgrade.Schema;
-            }
-        }
-        catch (System.Exception ex)
-        {
-            ui.updateErrorPanel.root.gameObject.SetActive(true);
-            ui.updateErrorPanel.tip.text = uiTip_.upgrade_parse_failure;
-
-            UnityLogger.Singleton.Exception(ex);
+            enterStartup(0);
             yield break;
         }
 
+        var storage = new XmlStorage<Upgrade.Schema>();
+        yield return storage.Load(VendorManager.Singleton.active, "Upgrade.xml");
+        schema_ = storage.xml as Upgrade.Schema;
         UnityLogger.Singleton.Info("Strategy of Update is {0}", schema_.body.update.strategy);
 
         if (schema_.body.update.strategy.Equals("skip"))
@@ -266,6 +245,13 @@ public class UpgradeBehaviour : MonoBehaviour
         switchPanel(Panel.SUCCESS);
         yield return new WaitForEndOfFrame();
         yield return upgrade_.OverwriteDependencies(schema_);
+        // 有错误
+        if (Upgrade.ErrorCode.OK != upgrade_.errorCode)
+        {
+
+            switchPanel(Panel.FAILURE);
+            yield break;
+        }
         UnityLogger.Singleton.Info("all dependencies overwrite success");
         enterStartup(1);
     }

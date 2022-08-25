@@ -28,8 +28,8 @@ public class SelectorBehaviour : MonoBehaviour
         foreach (var vendor in AppConfig.Singleton.body.vendorSelector.vendors)
         {
             var clone = GameObject.Instantiate(templateVendor, templateVendor.transform.parent);
-            clone.name = vendor.directory;
-            clone.transform.Find("text").GetComponent<Text>().text = vendor.name;
+            clone.name = vendor.scope;
+            clone.transform.Find("text").GetComponent<Text>().text = vendor.display;
             clone.gameObject.SetActive(true);
             clone.GetComponent<Button>().onClick.AddListener(() =>
             {

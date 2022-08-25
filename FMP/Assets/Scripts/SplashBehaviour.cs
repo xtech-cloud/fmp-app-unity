@@ -44,6 +44,7 @@ public class SplashBehaviour : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
+        canvas.gameObject.SetActive(false);
         UnityLogger.Singleton.Info("########### Enter Splash Scene");
 
         txtVersion.text = "ver " + Application.version;
@@ -61,24 +62,24 @@ public class SplashBehaviour : MonoBehaviour
 
         foreach (var vendor in AppConfig.Singleton.body.vendorSelector.vendors)
         {
-            if (vendor.directory.Equals(AppConfig.Singleton.body.vendorSelector.active))
+            if (vendor.scope.Equals(AppConfig.Singleton.body.vendorSelector.active))
             {
                 activeVendor_ = vendor;
                 break;
             }
         }
-        if (null == activeVendor_)
-            return;
 
-        // 加载皮肤
-        loadSprite(activeVendor_.skin.splash.background, imgBackground);
-        loadSprite(activeVendor_.skin.splash.slogan, imgSlogan);
-        // 调整画质
-        adjustGraphics();
     }
 
-    void Start()
+    IEnumerator Start()
     {
+        // 调整画质
+        yield return adjustGraphics();
+        // 加载皮肤
+        yield return applySkin();
+
+        canvas.gameObject.SetActive(true);
+
         txtError.text = "";
         string deviceCode = Constant.DeviceCode;
         UnityLogger.Singleton.Info("deviceCode: {0}", deviceCode);
@@ -86,28 +87,28 @@ public class SplashBehaviour : MonoBehaviour
 
         if (Application.platform == RuntimePlatform.WindowsEditor)
         {
-            StartCoroutine(enterUpgrade(false));
-            return;
+            StartCoroutine(enterStartup(0));
+            yield break;
         }
 
-        string licenseFile = Path.Combine(Constant.DataPath, "app.cer");
-        if (!File.Exists(licenseFile))
+        Storage storage = new Storage();
+        yield return storage.ReadBytes(null, "app.cer");
+        if (200 != storage.statusCode)
         {
             txtError.text = uiTip_.license_not_found;
-            return;
+            yield break;
         }
-
         int expiry = 0;
         long timestamp = 0;
         int verifyCode = 0;
-        bool pass = verifyLicense(licenseFile, deviceCode, out verifyCode, out expiry, out timestamp);
+        bool pass = verifyLicense(storage.bytes, deviceCode, out verifyCode, out expiry, out timestamp);
         if (!pass)
         {
             txtError.text = verifyCodeMap[string.Format("verify_code_{0}", verifyCode)];
-            return;
+            yield break;
         }
 
-        bool delay = false;
+        float delay = 2;
         if (expiry > 0)
         {
             System.DateTime created = new System.DateTime(1970, 1, 1, 0, 0, 0, 0);
@@ -116,21 +117,14 @@ public class SplashBehaviour : MonoBehaviour
             int left = expiry - sp.Days;
             string expiryTip = uiTip_.expiry_left;
             txtError.text = expiryTip.Replace("??", left.ToString());
-            delay = true;
+            delay = 6;
         }
-        StartCoroutine(enterUpgrade(delay));
+        yield return enterStartup(delay);
     }
 
-    private IEnumerator enterUpgrade(bool _delay)
+    private IEnumerator enterStartup(float _time)
     {
-        if (_delay)
-        {
-            yield return new WaitForSeconds(5.0f);
-        }
-        else
-        {
-            yield return new WaitForSeconds(1.0f);
-        }
+        yield return new WaitForSeconds(_time);
 
         if (null == activeVendor_)
         {
@@ -138,12 +132,15 @@ public class SplashBehaviour : MonoBehaviour
             yield break;
         }
 
-        if (!Directory.Exists(Path.Combine(Constant.DataPath, activeVendor_.directory)))
+        Storage storage = new Storage();
+        yield return storage.ReadBytes(activeVendor_.scope, "meta.json");
+        if (200 != storage.statusCode)
         {
             txtError.text = uiTip_.vendor_directory_none;
             yield break;
         }
 
+        yield return DependencyConfig.Singleton.Load();
         SceneManager.LoadScene("upgrade");
     }
 
@@ -168,12 +165,30 @@ public class SplashBehaviour : MonoBehaviour
         //File.WriteAllText(Path.Combine(Constant.DataPath, "sn.out"), _code);
     }
 
-    private bool verifyLicense(string _file, string _deviceCode, out int _verifyCode, out int _expiry, out long _timestamp)
+    private bool verifyLicense(byte[] _bytes, string _deviceCode, out int _verifyCode, out int _expiry, out long _timestamp)
     {
         _expiry = 0;
         _timestamp = 0;
-        string[] lines = File.ReadAllLines(_file);
-        _verifyCode = License.Verify(lines, BusinessBranch.Security.AppKey, BusinessBranch.Security.AppSecret, _deviceCode);
+        _verifyCode = 1;
+
+        if (null == _bytes)
+        {
+            return false;
+        }
+
+        List<string> lines = new List<string>();
+        using (MemoryStream ms = new MemoryStream(_bytes))
+        {
+            using (StreamReader reader = new StreamReader(ms))
+            {
+                while (!reader.EndOfStream)
+                {
+                    lines.Add(reader.ReadLine());
+                }
+            }
+        }
+
+        _verifyCode = License.Verify(lines.ToArray(), BusinessBranch.Security.AppKey, BusinessBranch.Security.AppSecret, _deviceCode);
         if (0 != _verifyCode)
         {
             return false;
@@ -184,10 +199,10 @@ public class SplashBehaviour : MonoBehaviour
         return true;
     }
 
-    private void adjustGraphics()
+    private IEnumerator adjustGraphics()
     {
         if (null == activeVendor_)
-            return;
+            yield break;
 
         // 设置画质
         Application.targetFrameRate = activeVendor_.graphics.fps;
@@ -233,16 +248,23 @@ public class SplashBehaviour : MonoBehaviour
         Screen.SetResolution(width, height, true);
     }
 
-    private void loadSprite(string _file, Image _image)
+    private IEnumerator applySkin()
     {
-        string path = Path.Combine(Constant.DataPath, VendorManager.Singleton.active);
-        path = Path.Combine(path, _file);
-        if (!File.Exists(path))
-            return;
-        byte[] data = File.ReadAllBytes(path);
-        Texture2D texture = new Texture2D(10, 10, TextureFormat.RGBA32, false);
-        texture.LoadImage(data);
-        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f);
-        _image.sprite = sprite;
+        if (null == activeVendor_)
+            yield break;
+
+        SpriteStorage storage = new SpriteStorage();
+        yield return storage.Load(activeVendor_.scope, activeVendor_.skin.splash.background);
+        if (null != storage.sprite)
+        {
+            imgBackground.sprite = storage.sprite;
+        }
+        yield return storage.Load(activeVendor_.scope, activeVendor_.skin.splash.slogan);
+        if (null != storage.sprite)
+        {
+            imgSlogan.sprite = storage.sprite;
+        }
     }
+
+
 }

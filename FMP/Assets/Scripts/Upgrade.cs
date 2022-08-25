@@ -24,7 +24,7 @@ public class Upgrade
 
     public class Schema
     {
-        public class Option
+        public class Field 
         {
             [XmlAttribute("attribute")]
             public string attribute { get; set; } = "";
@@ -33,48 +33,15 @@ public class Upgrade
             public string values { get; set; } = "";
         }
 
-        public class Reference
-        {
-            [XmlAttribute("org")]
-            public string org { get; set; } = "";
-            [XmlAttribute("module")]
-            public string module { get; set; } = "";
-            [XmlAttribute("version")]
-            public string version { get; set; } = "";
-        }
-
-        public class Plugin
-        {
-            [XmlAttribute("name")]
-            public string name { get; set; } = "";
-            [XmlAttribute("version")]
-            public string version { get; set; } = "";
-        }
-
-        public class FMP
-        {
-            [XmlAttribute]
-            public string environment { get; set; } = "product";
-            [XmlAttribute]
-            public string repository { get; set; } = "";
-            [XmlArray("References"), XmlArrayItem("Reference")]
-            public Reference[] refenrences { get; set; } = new Reference[0];
-
-            [XmlArray("Plugins"), XmlArrayItem("Plugin")]
-            public Plugin[] plugins { get; set; } = new Plugin[0];
-        }
 
         public class Update
         {
             [XmlAttribute("strategy")]
             public string strategy { get; set; } = "skip";
-            [XmlElement("FMP")]
-            public FMP fmp { get; set; } = new FMP();
         }
 
         public class Body
         {
-
             [XmlElement("Update")]
             public Update update { get; set; } = new Update();
         }
@@ -82,9 +49,9 @@ public class Upgrade
         [XmlElement("Body")]
         public Body body { get; set; } = new Body();
 
-        [XmlArray("Header"), XmlArrayItem("Option")]
-        public Option[] options { get; set; } = new Option[] {
-            new Option
+        [XmlArray("Header"), XmlArrayItem("Field")]
+        public Field[] fields{ get; set; } = new Field[] {
+            new Field 
             {
                 attribute = "Update.strategy",
                 values = "升级策略，可选值为：skip, auto, manual",
@@ -116,6 +83,7 @@ public class Upgrade
         ENTRY_NOTFOUNDINREPO,
         ENTRY_NETWORK_ERROR,
         ENTRY_SIZE_ERROR,
+        ENTRY_COPY_ERROR,
     }
 
 
@@ -140,13 +108,13 @@ public class Upgrade
     public void ParseSchema(Schema _schema)
     {
         fileTasks_.Clear();
-        foreach (var reference in _schema.body.update.fmp.refenrences)
+        foreach (var reference in DependencyConfig.Singleton.body.references)
         {
             string version = reference.version;
-            if (_schema.body.update.fmp.environment.Equals("develop"))
+            if (DependencyConfig.Singleton.body.options.environment.Equals("develop"))
                 version = "develop";
 
-            string address = string.Format("{0}/modules/{1}/{2}@{3}", _schema.body.update.fmp.repository, reference.org, reference.module, version);
+            string address = string.Format("{0}/modules/{1}/{2}@{3}", DependencyConfig.Singleton.body.options.repository, reference.org, reference.module, version);
 
             var manifestTask = new ManifestTask();
             manifestTask.url = string.Format("{0}/manifest.json", address);
@@ -183,13 +151,13 @@ public class Upgrade
             fileTasks_.Add(xmlTask);
         }
 
-        foreach (var plugin in _schema.body.update.fmp.plugins)
+        foreach (var plugin in DependencyConfig.Singleton.body.plugins)
         {
             string version = plugin.version;
-            if (_schema.body.update.fmp.environment.Equals("develop"))
+            if (DependencyConfig.Singleton.body.options.environment.Equals("develop"))
                 version = "develop";
 
-            string address = string.Format("{0}/plugins/{1}@{2}", _schema.body.update.fmp.repository, plugin.name, version);
+            string address = string.Format("{0}/plugins/{1}@{2}", DependencyConfig.Singleton.body.options.repository, plugin.name, version);
 
             var manifestTask = new ManifestTask();
             manifestTask.url = string.Format("{0}/manifest.json", address);
@@ -302,13 +270,30 @@ public class Upgrade
         yield return new UnityEngine.WaitForEndOfFrame();
         string vendor_dir = Path.Combine(Constant.DataPath, VendorManager.Singleton.active);
         string cache_dir = Path.Combine(vendor_dir, ".upgrade");
+        if (!Directory.Exists(Path.Combine(vendor_dir, "modules")))
+            Directory.CreateDirectory(Path.Combine(vendor_dir, "modules"));
+        if (!Directory.Exists(Path.Combine(vendor_dir, "configs")))
+            Directory.CreateDirectory(Path.Combine(vendor_dir, "configs"));
+        if (!Directory.Exists(Path.Combine(vendor_dir, "uabs")))
+            Directory.CreateDirectory(Path.Combine(vendor_dir, "uabs"));
+
         foreach (var task in fileTasks_)
         {
             if (!File.Exists(Path.Combine(cache_dir, task.saveAs)))
                 continue;
             UnityLogger.Singleton.Info("Overwrite {0}", task.saveAs);
-            File.Copy(Path.Combine(cache_dir, task.saveAs), Path.Combine(vendor_dir, task.saveAs), true);
-            File.Delete(Path.Combine(cache_dir, task.saveAs));
+            try
+            {
+
+                File.Copy(Path.Combine(cache_dir, task.saveAs), Path.Combine(vendor_dir, task.saveAs), true);
+                File.Delete(Path.Combine(cache_dir, task.saveAs));
+            }
+            catch (Exception ex)
+            {
+                UnityLogger.Singleton.Exception(ex);
+                errorCode = ErrorCode.ENTRY_COPY_ERROR;
+                yield break;
+            }
         }
     }
 

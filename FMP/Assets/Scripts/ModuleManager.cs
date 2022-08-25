@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using System.Xml.Serialization;
 using UnityEngine;
 using MVCS = XTC.FMP.LIB.MVCS;
@@ -14,6 +16,8 @@ public class ModuleManager
         public int length = 1;
         [XmlAttribute("tip")]
         public string tip = "";
+        [XmlAttribute("org")]
+        public string org = "";
         [XmlAttribute("module")]
         public string module = "";
     }
@@ -43,6 +47,9 @@ public class ModuleManager
     public Action<string> OnTipChanged { get; set; }
     public Action OnBootFinish { get; set; }
 
+    public Dictionary<string, string> configs { get; private set; } = new Dictionary<string, string>();
+    public bool success { get; private set; } = true;
+
     private Dictionary<string, Module> modules_ = new Dictionary<string, Module>();
     private Dictionary<string, Assembly> assemblies_ = new Dictionary<string, Assembly>();
     private Bootloader bootloader_ = new Bootloader();
@@ -54,6 +61,7 @@ public class ModuleManager
     private Action<int> onBootStepProgress_;
     private Action<string> onBootStepFinish_;
 
+
     public ModuleManager()
     {
         AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(assemblyResolve);
@@ -61,74 +69,22 @@ public class ModuleManager
         onBootStepFinish_ = this.handleBootStepFinish;
     }
 
-    public void Load(string _vendor, string _datapath)
+    public IEnumerator Load()
     {
-        prepareBootloader(_vendor, _datapath);
+        // 加载所有模块的配置文件
+        // 配置文件在这里统一加载，而不由模块自己加载，是为了在模块的Unity工程中，能将配置文件放置于编译外的代码中灵活处理。
+        yield return loadConfigs();
+        if (!success)
+            yield break;
+        yield return loadDependencies();
+        if (!success)
+            yield break;
 
-        string modulesDir = Path.Combine(_datapath, string.Format("{0}/modules", _vendor));
-        UnityLogger.Singleton.Info("ready to load modules from {0}", modulesDir);
-        if (!Directory.Exists(modulesDir))
-        {
-            UnityLogger.Singleton.Error("{0} not found", modulesDir);
-            return;
-        }
-
-        Func<string, Assembly> loadAssembly = (_entry) =>
-        {
-            string file = Path.Combine(modulesDir, _entry);
-            Assembly assembly = Assembly.LoadFile(file);
-            if (null == assembly)
-            {
-                UnityLogger.Singleton.Error("load assembly from {0} failed!", file);
-                return null;
-            }
-
-            string filename = Path.GetFileName(_entry);
-            assemblies_[filename] = assembly;
-            return assembly;
-        };
-
-        Action<string, Assembly> instantiateAssembly = (_entry, _assembly) =>
-        {
-            string filename = Path.GetFileNameWithoutExtension(_entry);
-            string namespacePrefix = filename.Substring(0, filename.Length - ".LIB.Unity".Length);
-            string entryClassName = namespacePrefix + ".LIB.Unity.MyEntry";
-            object instanceEntry = _assembly.CreateInstance(entryClassName);
-            Type entryClass = _assembly.GetType(entryClassName);
-            Module module = new Module(_assembly, instanceEntry, entryClass, namespacePrefix);
-            modules_[filename] = module;
-            UnityLogger.Singleton.Info("load assembly {0} success", _entry);
-        };
-
-
-        Dictionary<string, Assembly> moduleFiles = new Dictionary<string, Assembly>();
-        foreach (var file in Directory.GetFiles(modulesDir))
-        {
-            if (!file.EndsWith(".dll"))
-                continue;
-            UnityLogger.Singleton.Debug("found {0}", file);
-            var assembly = loadAssembly(file);
-            if (file.EndsWith(".LIB.Unity.dll") && file.Contains("FMP.MOD"))
-            {
-                foreach (var bootstep in bootloader_.steps)
-                {
-                    string filename = Path.GetFileNameWithoutExtension(file);
-                    if (filename.Equals(bootstep.module))
-                    {
-                        moduleFiles[file] = assembly;
-                        break;
-                    }
-                }
-            }
-        }
-
-        // module需要在其他非模块程序集加载完后再加载
-        foreach (var pair in moduleFiles)
-        {
-            instantiateAssembly(pair.Key, pair.Value);
-        }
-
-        UnityLogger.Singleton.Info("finally load {0} modules", modules_.Count);
+        // 加载bootloader
+        var storage = new XmlStorage<Bootloader>();
+        yield return storage.Load(VendorManager.Singleton.active, "Bootloader.xml");
+        bootloader_ = storage.xml as Bootloader;
+        success = true;
     }
 
     public void Unload()
@@ -141,14 +97,8 @@ public class ModuleManager
 
     public void Inject(MonoBehaviour _mono, MVCS.Framework _framework, MVCS.Logger _logger, MVCS.Config _config, Dictionary<string, MVCS.Any> _settings)
     {
-        foreach (var bootstep in bootloader_.steps)
+        foreach (var module in modules_.Values)
         {
-            Module module;
-            if (!modules_.TryGetValue(bootstep.module, out module))
-            {
-                UnityLogger.Singleton.Error("Module {0} not found", bootstep.module);
-                continue;
-            }
             MethodInfo miNewOptions = module.entryClass.GetMethod("NewOptions");
             var options = miNewOptions.Invoke(module.entryInstance, new object[] { });
             MethodInfo miInject = module.entryClass.GetMethod("Inject");
@@ -162,15 +112,8 @@ public class ModuleManager
 
     public void Register()
     {
-        foreach (var bootstep in bootloader_.steps)
+        foreach (var module in modules_.Values)
         {
-            Module module;
-            if (!modules_.TryGetValue(bootstep.module, out module))
-            {
-                UnityLogger.Singleton.Error("Module {0} not found", bootstep.module);
-                continue;
-            }
-
             MethodInfo miRegister = module.entryClass.GetMethod("RegisterDummy");
             miRegister.Invoke(module.entryInstance, null);
         }
@@ -178,6 +121,7 @@ public class ModuleManager
 
     public void Preload()
     {
+        UnityLogger.Singleton.Info("read to boot {0} steps", bootloader_.steps.Length);
         totalBootLength_ = 0;
         foreach (var step in bootloader_.steps)
         {
@@ -189,15 +133,8 @@ public class ModuleManager
 
     public void Cancel()
     {
-        foreach (var bootstep in bootloader_.steps)
+        foreach (var module in modules_.Values)
         {
-            Module module;
-            if (!modules_.TryGetValue(bootstep.module, out module))
-            {
-                UnityLogger.Singleton.Error("Module {0} not found", bootstep.module);
-                continue;
-            }
-
             MethodInfo miCancel = module.entryClass.GetMethod("CancelDummy");
             miCancel.Invoke(module.entryInstance, null);
         }
@@ -209,32 +146,139 @@ public class ModuleManager
         return assemblies_[args.Name];
     }
 
-    private void prepareBootloader(string _vendor, string _datapath)
+    private IEnumerator loadConfigs()
     {
-        string config = Path.Combine(_datapath, string.Format("{0}/Bootloader.xml", _vendor));
-        var xs = new XmlSerializer(typeof(Bootloader));
-        // 如果文件不存在，则创建默认的配置文件
-        if (!File.Exists(config))
+        var storage = new ModuleStorage();
+        foreach (var reference in DependencyConfig.Singleton.body.references)
         {
-            bootloader_ = new Bootloader();
-            using (FileStream writer = new FileStream(config, FileMode.CreateNew))
+            UnityLogger.Singleton.Info("load config of {0}_{1}", reference.org, reference.module);
+            yield return storage.LoadConfig(VendorManager.Singleton.active, reference.org, reference.module, reference.version);
+            if (200 != storage.statusCode)
             {
-                xs.Serialize(writer, bootloader_);
-                writer.Close();
+                UnityLogger.Singleton.Error(storage.error);
+                success = false;
+                yield break;
             }
+            UnityLogger.Singleton.Trace("load config of {0}_{1} success", reference.org, reference.module);
+            configs[string.Format("{0}_{1}", reference.org, reference.module)] = storage.config;
+        }
+    }
+
+    private IEnumerator loadDependencies()
+    {
+        // 先加载plugin
+        foreach (var plugin in DependencyConfig.Singleton.body.plugins)
+        {
+            yield return loadPlugin(plugin.name, plugin.version);
+            if (!success)
+                yield break;
         }
 
+        // 再加载reference
+        foreach (var reference in DependencyConfig.Singleton.body.references)
+        {
+            yield return loadReference(reference.org, reference.module, reference.version);
+            if (!success)
+                yield break;
+        }
+
+        UnityLogger.Singleton.Info("finally load {0} modules", modules_.Count);
+    }
+
+    private IEnumerator loadPlugin(string _file, string _version)
+    {
+        string file = _file + ".dll";
+        var storage = new ModuleStorage();
+        UnityLogger.Singleton.Info("load {0}", file);
+        yield return storage.LoadAssembly(VendorManager.Singleton.active, file, _version);
+        if (null == storage.assembly)
+        {
+            UnityLogger.Singleton.Error(storage.error);
+            UnityLogger.Singleton.Error("load assembly from {0} failed!", file);
+            success = false;
+            yield break;
+        }
+
+        string filename = Path.GetFileName(file);
+        assemblies_[filename] = storage.assembly;
+    }
+
+    private IEnumerator loadReference(string _org, string _module, string _version)
+    {
+        var storage = new ModuleStorage();
+
+        // proto.dll
+        string file = string.Format("fmp-{0}-{1}-lib-proto.dll", _org.ToLower(), _module.ToLower());
+        UnityLogger.Singleton.Info("load {0}", file);
+        yield return storage.LoadAssembly(VendorManager.Singleton.active, file, _version);
+        if (null == storage.assembly)
+        {
+            UnityLogger.Singleton.Error(storage.error);
+            UnityLogger.Singleton.Error("load assembly from {0} failed!", file);
+            success = false;
+            yield break;
+        }
+        string filename = Path.GetFileName(file);
+        assemblies_[filename] = storage.assembly;
+
+        // bridge.dll
+        file = string.Format("fmp-{0}-{1}-lib-bridge.dll", _org.ToLower(), _module.ToLower());
+        UnityLogger.Singleton.Info("load {0}", file);
+        yield return storage.LoadAssembly(VendorManager.Singleton.active, file, _version);
+        if (null == storage.assembly)
+        {
+            UnityLogger.Singleton.Error(storage.error);
+            UnityLogger.Singleton.Error("load assembly from {0} failed!", file);
+            success = false;
+            yield break;
+        }
+        filename = Path.GetFileName(file);
+        assemblies_[filename] = storage.assembly;
+
+        // mvcs.dll
+        file = string.Format("fmp-{0}-{1}-lib-mvcs.dll", _org.ToLower(), _module.ToLower());
+        UnityLogger.Singleton.Info("load {0}", file);
+        yield return storage.LoadAssembly(VendorManager.Singleton.active, file, _version);
+        if (null == storage.assembly)
+        {
+            UnityLogger.Singleton.Error(storage.error);
+            UnityLogger.Singleton.Error("load assembly from {0} failed!", file);
+            success = false;
+            yield break;
+        }
+        filename = Path.GetFileName(file);
+        assemblies_[filename] = storage.assembly;
+
+        // Unity.dll
+        file = string.Format("{0}.FMP.MOD.{1}.LIB.Unity.dll", _org, _module);
+        UnityLogger.Singleton.Info("load {0}", file);
+        yield return storage.LoadAssembly(VendorManager.Singleton.active, file, _version);
+        if (null == storage.assembly)
+        {
+            UnityLogger.Singleton.Error(storage.error);
+            UnityLogger.Singleton.Error("load assembly from {0} failed!", file);
+            success = false;
+            yield break;
+        }
+        filename = Path.GetFileName(file);
+        assemblies_[filename] = storage.assembly;
+
+        Assembly entryAssembly = storage.assembly;
+
+        string namespacePrefix = string.Format("{0}.FMP.MOD.{1}", _org, _module);
+        string entryClassName = string.Format("{0}.LIB.Unity.MyEntry", namespacePrefix);
+        UnityLogger.Singleton.Info("Create Instance of {0}", entryClassName);
         try
         {
-            using (FileStream reader = new FileStream(config, FileMode.Open))
-            {
-                bootloader_ = xs.Deserialize(reader) as Bootloader;
-            }
+            object instanceEntry = entryAssembly.CreateInstance(entryClassName);
+            Type entryClass = entryAssembly.GetType(entryClassName);
+            Module module = new Module(entryAssembly, instanceEntry, entryClass, namespacePrefix);
+            modules_[filename] = module;
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             UnityLogger.Singleton.Exception(ex);
-            return;
+            success = false;
         }
     }
 
@@ -248,13 +292,14 @@ public class ModuleManager
         }
 
         BootStep step = bootloader_.steps[currentBootStep_];
-        UnityLogger.Singleton.Info("Boot the step, module is {0}, tip is {1}", step.module, step.tip);
+        string moduleFile = string.Format("{0}.FMP.MOD.{1}.LIB.Unity.dll", step.org, step.module);
+        UnityLogger.Singleton.Info("Boot the step, module is {0}, tip is {1}", moduleFile, step.tip);
         OnTipChanged(step.tip);
 
         Module module;
-        if (!modules_.TryGetValue(step.module, out module))
+        if (!modules_.TryGetValue(moduleFile, out module))
         {
-            UnityLogger.Singleton.Error("Module {0} not found", step.module);
+            UnityLogger.Singleton.Error("Module {0} not found", moduleFile);
             return;
         }
 

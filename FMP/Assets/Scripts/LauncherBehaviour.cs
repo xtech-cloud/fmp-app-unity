@@ -5,13 +5,12 @@ using UnityEngine.SceneManagement;
 
 public class LauncherBehaviour : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Awake()
+    IEnumerator Start()
     {
         UnityLogger.Singleton.Info("########### Enter Launcher Scene");
 
         // 加载配置文件
-        AppConfig.Singleton.Load();
+        yield return AppConfig.Singleton.Load();
 
         // 解析参数
         string[] commandLineArgs = Environment.GetCommandLineArgs();
@@ -28,10 +27,7 @@ public class LauncherBehaviour : MonoBehaviour
         {
             VendorManager.Singleton.active = AppConfig.Singleton.body.vendorSelector.active;
         }
-    }
 
-    void Start()
-    {
         SceneManager.LoadScene("selector");
     }
 }

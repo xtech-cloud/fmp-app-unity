@@ -25,7 +25,7 @@ if '%errorlevel%' NEQ '0' (
 :--------------------------------------
 
 IF NOT EXIST %USERPROFILE%\AppData\LocalLow\XTC\FMP MKDIR %USERPROFILE%\AppData\LocalLow\XTC\FMP
-IF EXIST %USERPROFILE%\AppData\LocalLow\XTC\FMP\data RD /Q %USERPROFILE%\AppData\LocalLow\XTC\FMP\data
-mklink /D %USERPROFILE%\AppData\LocalLow\XTC\FMP\data %CD%\vendor
+IF EXIST %USERPROFILE%\AppData\LocalLow\XTC\FMP\default RD /Q %USERPROFILE%\AppData\LocalLow\XTC\FMP\default
+mklink /D %USERPROFILE%\AppData\LocalLow\XTC\FMP\default %CD%\vendor
 
 pause

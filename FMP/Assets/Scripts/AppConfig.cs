@@ -1,11 +1,13 @@
 ﻿using System.IO;
+using System.Collections;
 using System.Xml.Serialization;
 using UnityEngine;
+using System.Text;
 
 public class AppConfig
 {
 
-    public class Option
+    public class Field 
     {
         [XmlAttribute("attribute")]
         public string attribute { get; set; } = "";
@@ -17,7 +19,7 @@ public class AppConfig
     public class VendorSelector
     {
         [XmlAttribute("active")]
-        public string active { get; set; } = "data";
+        public string active { get; set; } = "default";
 
         [XmlArray("Vendors"), XmlArrayItem("Vendor")]
 
@@ -25,7 +27,7 @@ public class AppConfig
         {
             new Vendor()
             {
-                directory = "data",
+                scope = "default",
                 graphics = new Graphics(),
             }
         };
@@ -33,11 +35,11 @@ public class AppConfig
 
     public class Vendor
     {
-        [XmlAttribute("directory")]
-        public string directory { get; set; } = "";
+        [XmlAttribute("scope")]
+        public string scope { get; set; } = "";
 
-        [XmlAttribute("name")]
-        public string name { get; set; } = "Default";
+        [XmlAttribute("display")]
+        public string display { get; set; } = "Default";
 
         [XmlElement("Skin")]
         public Skin skin = new Skin();
@@ -112,50 +114,50 @@ public class AppConfig
         [XmlElement("Body")]
         public Body body { get; set; } = new Body();
 
-        [XmlArray("Header"), XmlArrayItem("Option")]
-        public Option[] options { get; set; } = new Option[]
+        [XmlArray("Header"), XmlArrayItem("Field")]
+        public Field[] fields{ get; set; } = new Field[]
         {
-            new Option
+            new Field
             {
                 attribute = "LogLevel.level",
                 values = "日志等级，可选值为：0(NONE), 1(EXCEPTION), 2(ERROR), 3(WARNING), 4(INFO), 5(DEBUG)5, 6(TRACE), 7(ALL)",
             },
-            new Option
+            new Field
             {
                 attribute = "Vendor.Selector.active",
                 values = "激活的虚拟环境的目录，如果没有激活的虚拟环境，会显示虚拟环境选择界面",
             },
-            new Option
+            new Field
             {
                 attribute = "Vendor.Graphices.pixelResolution",
                 values = "像素分辨率，可选值为 auto（自动匹配ReferenceResolution）, 宽度x高度",
             },
-            new Option
+            new Field
             {
                 attribute = "Vendor.Graphics.ReferenceResolution.match",
                 values = "参考分辨率的适配权重，可选值为：0(匹配宽度), 1(匹配高度)",
             },
-            new Option
+            new Field
             {
                 attribute = "Vendor.Graphics.ReferenceResolution.width",
                 values = "参考分辨率的宽度，影响UI缩放",
             },
-            new Option
+            new Field
             {
                 attribute = "Vendor.Graphics.ReferenceResolution.height",
                 values = "参考分辨率的高度，影响UI缩放",
             },
-            new Option
+            new Field
             {
                 attribute = "Vendor.Graphics.qulity",
                 values = "画质等级：0(VeryLow), 1(Low), 2(Medium), 3(High), 4(VeryHigh) 5(Ultra)",
             },
-            new Option
+            new Field
             {
                 attribute = "Vendor.Skin.Splash.background",
                 values = "过场界面的背景图片文件名，文件存放在vendor目录下",
             },
-            new Option
+            new Field
             {
                 attribute = "Vendor.Skin.Splash.slogan",
                 values = "过场界面的标语图片文件名，文件存放在vendor目录下",
@@ -185,32 +187,11 @@ public class AppConfig
     }
 
 
-    public void Load()
+    public IEnumerator Load()
     {
-        try
-        {
-            string file = Path.Combine(Constant.DataPath, "AppConfig.xml");
-
-            var xs = new XmlSerializer(typeof(Schema));
-            // 如果文件不存在，则创建默认的配置文件
-            if (!File.Exists(file))
-            {
-                using (FileStream writer = new FileStream(file, FileMode.CreateNew))
-                {
-                    xs.Serialize(writer, schema_);
-                    writer.Close();
-                }
-                return;
-            }
-
-            using (FileStream reader = new FileStream(file, FileMode.Open))
-            {
-                schema_ = xs.Deserialize(reader) as Schema;
-            }
-        }
-        catch (System.Exception ex)
-        {
-            UnityLogger.Singleton.Exception(ex);
-        }
+        UnityLogger.Singleton.Info("ready to load AppConfig.xml ...");
+        var storage = new XmlStorage<Schema>();
+        yield return storage.Load(null, "AppConfig.xml");
+        schema_ = storage.xml as Schema;
     }
 }
