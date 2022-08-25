@@ -32,10 +32,6 @@ public class LauncherBehaviour : MonoBehaviour
 
     void Start()
     {
-        // 如果命令参数和配置文件均没有指定vendor，跳转到vendor选择场景
-        if (string.IsNullOrEmpty(VendorManager.Singleton.active))
-            SceneManager.LoadScene("selector");
-        else
-            SceneManager.LoadScene("splash");
+        SceneManager.LoadScene("selector");
     }
 }

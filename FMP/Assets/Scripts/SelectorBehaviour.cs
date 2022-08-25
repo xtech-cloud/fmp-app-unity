@@ -16,6 +16,15 @@ public class SelectorBehaviour : MonoBehaviour
         UnityLogger.Singleton.Info("########### Enter Selector Scene");
 
         templateVendor.gameObject.SetActive(false);
+
+        // 如果有激活的vendor，跳转到splash
+        if (!string.IsNullOrEmpty(VendorManager.Singleton.active))
+        {
+            SceneManager.LoadScene("splash");
+            return;
+        }
+
+        // 如果命令参数和配置文件均没有指定vendor，显示vendor选择
         foreach (var vendor in AppConfig.Singleton.body.vendorSelector.vendors)
         {
             var clone = GameObject.Instantiate(templateVendor, templateVendor.transform.parent);

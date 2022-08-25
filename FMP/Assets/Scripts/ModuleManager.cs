@@ -63,6 +63,7 @@ public class ModuleManager
 
     public void Load(string _vendor, string _datapath)
     {
+        prepareBootloader(_vendor, _datapath);
 
         string modulesDir = Path.Combine(_datapath, string.Format("{0}/modules", _vendor));
         UnityLogger.Singleton.Info("ready to load modules from {0}", modulesDir);
@@ -99,7 +100,6 @@ public class ModuleManager
             UnityLogger.Singleton.Info("load assembly {0} success", _entry);
         };
 
-        prepareBootloader(_vendor, _datapath);
 
         Dictionary<string, Assembly> moduleFiles = new Dictionary<string, Assembly>();
         foreach (var file in Directory.GetFiles(modulesDir))
@@ -212,15 +212,20 @@ public class ModuleManager
     private void prepareBootloader(string _vendor, string _datapath)
     {
         string config = Path.Combine(_datapath, string.Format("{0}/Bootloader.xml", _vendor));
+        var xs = new XmlSerializer(typeof(Bootloader));
+        // 如果文件不存在，则创建默认的配置文件
         if (!File.Exists(config))
         {
-            UnityLogger.Singleton.Error("Bootloader.xml not found");
-            return;
+            bootloader_ = new Bootloader();
+            using (FileStream writer = new FileStream(config, FileMode.CreateNew))
+            {
+                xs.Serialize(writer, bootloader_);
+                writer.Close();
+            }
         }
 
         try
         {
-            var xs = new XmlSerializer(typeof(Bootloader));
             using (FileStream reader = new FileStream(config, FileMode.Open))
             {
                 bootloader_ = xs.Deserialize(reader) as Bootloader;
@@ -229,6 +234,7 @@ public class ModuleManager
         catch (System.Exception ex)
         {
             UnityLogger.Singleton.Exception(ex);
+            return;
         }
     }
 

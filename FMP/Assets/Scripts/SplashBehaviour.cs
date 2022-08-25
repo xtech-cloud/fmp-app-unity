@@ -86,7 +86,7 @@ public class SplashBehaviour : MonoBehaviour
 
         if (Application.platform == RuntimePlatform.WindowsEditor)
         {
-            StartCoroutine(enterStartup(false));
+            StartCoroutine(enterUpgrade(false));
             return;
         }
 
@@ -118,10 +118,10 @@ public class SplashBehaviour : MonoBehaviour
             txtError.text = expiryTip.Replace("??", left.ToString());
             delay = true;
         }
-        StartCoroutine(enterStartup(delay));
+        StartCoroutine(enterUpgrade(delay));
     }
 
-    private IEnumerator enterStartup(bool _delay)
+    private IEnumerator enterUpgrade(bool _delay)
     {
         if (_delay)
         {
