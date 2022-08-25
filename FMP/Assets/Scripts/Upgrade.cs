@@ -177,9 +177,6 @@ public class Upgrade
         updateFinishedSize = 0;
         updateEntryHash = "";
 
-        string cache_dir = Path.Combine(Constant.DataPath, VendorManager.Singleton.active);
-        cache_dir = Path.Combine(cache_dir, ".upgrade");
-
         foreach (var manifestTask in manifestTasks_)
         {
             //下载过的清单不需要再次下载
@@ -231,7 +228,7 @@ public class Upgrade
                     file.size = entry.size;
                     file.hash = entry.hash;
                     // 如果文件已经下载
-                    string hashFile = Path.Combine(cache_dir, file.saveAs) + ".hash";
+                    string hashFile = Path.Combine(Storage.UpgradeCachePath, file.saveAs) + ".hash";
                     if (File.Exists(hashFile))
                     {
                         if (File.ReadAllText(hashFile).Equals(file.hash))
@@ -268,25 +265,23 @@ public class Upgrade
     public IEnumerator OverwriteDependencies(Schema _schema)
     {
         yield return new UnityEngine.WaitForEndOfFrame();
-        string vendor_dir = Path.Combine(Constant.DataPath, VendorManager.Singleton.active);
-        string cache_dir = Path.Combine(vendor_dir, ".upgrade");
-        if (!Directory.Exists(Path.Combine(vendor_dir, "modules")))
-            Directory.CreateDirectory(Path.Combine(vendor_dir, "modules"));
-        if (!Directory.Exists(Path.Combine(vendor_dir, "configs")))
-            Directory.CreateDirectory(Path.Combine(vendor_dir, "configs"));
-        if (!Directory.Exists(Path.Combine(vendor_dir, "uabs")))
-            Directory.CreateDirectory(Path.Combine(vendor_dir, "uabs"));
+        if (!Directory.Exists(Path.Combine(Storage.VendorPath, "modules")))
+            Directory.CreateDirectory(Path.Combine(Storage.VendorPath, "modules"));
+        if (!Directory.Exists(Path.Combine(Storage.VendorPath, "configs")))
+            Directory.CreateDirectory(Path.Combine(Storage.VendorPath, "configs"));
+        if (!Directory.Exists(Path.Combine(Storage.VendorPath, "uabs")))
+            Directory.CreateDirectory(Path.Combine(Storage.VendorPath, "uabs"));
 
         foreach (var task in fileTasks_)
         {
-            if (!File.Exists(Path.Combine(cache_dir, task.saveAs)))
+            if (!File.Exists(Path.Combine(Storage.UpgradeCachePath, task.saveAs)))
                 continue;
             UnityLogger.Singleton.Info("Overwrite {0}", task.saveAs);
             try
             {
 
-                File.Copy(Path.Combine(cache_dir, task.saveAs), Path.Combine(vendor_dir, task.saveAs), true);
-                File.Delete(Path.Combine(cache_dir, task.saveAs));
+                File.Copy(Path.Combine(Storage.UpgradeCachePath, task.saveAs), Path.Combine(Storage.VendorPath, task.saveAs), true);
+                File.Delete(Path.Combine(Storage.UpgradeCachePath, task.saveAs));
             }
             catch (Exception ex)
             {
@@ -322,9 +317,7 @@ public class Upgrade
         fileWebRequest_ = UnityWebRequest.Get(task.url);
         // 下载到缓存目录中
         UnityLogger.Singleton.Trace("download {0}", task.saveAs);
-        string cache_dir = Path.Combine(Constant.DataPath, VendorManager.Singleton.active);
-        cache_dir = Path.Combine(cache_dir, ".upgrade");
-        string saveAsPath = Path.Combine(cache_dir, task.saveAs);
+        string saveAsPath = Path.Combine(Storage.UpgradeCachePath, task.saveAs);
         fileWebRequest_.downloadHandler = new DownloadHandlerFile(saveAsPath);
         yield return fileWebRequest_.SendWebRequest();
         if (fileWebRequest_.result != UnityWebRequest.Result.Success)

@@ -78,7 +78,7 @@ public class StartupBehaviour : MonoBehaviour
         moduleManager.OnUpgressChanged = (_percentage) => textBootloaderUpgress.text = _percentage.ToString();
         moduleManager.OnBootFinish = () => bootloader.SetActive(false);
         settings["vendor"] = MVCS.Any.FromString(activeVendor_.scope);
-        settings["datapath"] = MVCS.Any.FromString(Constant.DataPath);
+        settings["datapath"] = MVCS.Any.FromString(Storage.ScopePath);
         settings["devicecode"] = MVCS.Any.FromString(Constant.DeviceCode);
         settings["platform"] = MVCS.Any.FromString(Constant.Platform);
         settings["main.canvas"] = MVCS.Any.FromObject(mainCanvas);

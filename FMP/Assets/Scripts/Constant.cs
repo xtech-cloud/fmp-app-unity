@@ -52,16 +52,5 @@ public class Constant
         }
     }
 
-    public static string DataPath
-    {
-        get
-        {
-            string scope = "default";
-            if (RuntimePlatform.WebGLPlayer == Application.platform)
-                return string.Format("http://localhost:9000/fmp.repository/{0}", scope);
-            return Application.persistentDataPath;
-        }
-    }
-
     private static string devicecode_ = "";
 }

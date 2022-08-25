@@ -11,13 +11,37 @@ using UnityEngine.Networking;
 
 public class Storage
 {
+    public static string ScopePath
+    {
+        get
+        {
+            return Application.persistentDataPath;
+        }
+    }
+
+    public static string VendorPath
+    {
+        get
+        {
+            return Path.Combine(ScopePath, VendorManager.Singleton.active);
+        }
+    }
+
+    public static string UpgradeCachePath
+    {
+        get
+        {
+            return Path.Combine(VendorPath, ".upgrade");
+        }
+    }
+
     public long statusCode { get; protected set; } = 200;
     public string error { get; protected set; } = "";
     public byte[] bytes { get; protected set; } = null;
 
     public IEnumerator ReadBytes(string _vendor, string _file)
     {
-        string address = Constant.DataPath;
+        string address = ScopePath;
         if (!string.IsNullOrEmpty(_vendor))
             address = Path.Combine(address, _vendor);
         string file = Path.Combine(address, _file);
@@ -42,7 +66,7 @@ public class Storage
 
     public IEnumerator WriteBytes(string _vendor, string _file, byte[] _content)
     {
-        string address = Constant.DataPath;
+        string address = ScopePath;
         if (!string.IsNullOrEmpty(_vendor))
             address = Path.Combine(address, _vendor);
         string file = Path.Combine(address, _file);
@@ -106,7 +130,7 @@ public class SpriteStorage : Storage
 
     public IEnumerator Load(string _vendor, string _file)
     {
-        string address = Constant.DataPath;
+        string address = ScopePath;
         if (!string.IsNullOrEmpty(_vendor))
             address = Path.Combine(address, _vendor);
         string file = Path.Combine(address, _file);
@@ -150,7 +174,7 @@ public class ModuleStorage : Storage
             yield break;
         }
 
-        string address = Constant.DataPath;
+        string address = ScopePath;
         if (!string.IsNullOrEmpty(_vendor))
             address = Path.Combine(address, _vendor);
         address = Path.Combine(address, "configs");
@@ -185,7 +209,7 @@ public class ModuleStorage : Storage
             yield break;
         }
 
-        string address = Constant.DataPath;
+        string address = ScopePath;
         if (!string.IsNullOrEmpty(_vendor))
             address = Path.Combine(address, _vendor);
         address = Path.Combine(address, "modules");
