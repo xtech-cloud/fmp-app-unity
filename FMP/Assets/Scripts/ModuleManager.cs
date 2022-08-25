@@ -185,12 +185,12 @@ public class ModuleManager
         UnityLogger.Singleton.Info("finally load {0} modules", modules_.Count);
     }
 
-    private IEnumerator loadPlugin(string _file, string _version)
+    private IEnumerator loadPlugin(string _name, string _version)
     {
-        string file = _file + ".dll";
+        string file = _name + ".dll";
         var storage = new ModuleStorage();
         UnityLogger.Singleton.Info("load {0}", file);
-        yield return storage.LoadAssembly(VendorManager.Singleton.active, file, _version);
+        yield return storage.LoadPlugin(_name, file, _version);
         if (null == storage.assembly)
         {
             UnityLogger.Singleton.Error(storage.error);
@@ -210,7 +210,7 @@ public class ModuleManager
         // proto.dll
         string file = string.Format("fmp-{0}-{1}-lib-proto.dll", _org.ToLower(), _module.ToLower());
         UnityLogger.Singleton.Info("load {0}", file);
-        yield return storage.LoadAssembly(VendorManager.Singleton.active, file, _version);
+        yield return storage.LoadReference(_org, _module, file, _version);
         if (null == storage.assembly)
         {
             UnityLogger.Singleton.Error(storage.error);
@@ -224,7 +224,7 @@ public class ModuleManager
         // bridge.dll
         file = string.Format("fmp-{0}-{1}-lib-bridge.dll", _org.ToLower(), _module.ToLower());
         UnityLogger.Singleton.Info("load {0}", file);
-        yield return storage.LoadAssembly(VendorManager.Singleton.active, file, _version);
+        yield return storage.LoadReference(_org, _module, file, _version);
         if (null == storage.assembly)
         {
             UnityLogger.Singleton.Error(storage.error);
@@ -238,7 +238,7 @@ public class ModuleManager
         // mvcs.dll
         file = string.Format("fmp-{0}-{1}-lib-mvcs.dll", _org.ToLower(), _module.ToLower());
         UnityLogger.Singleton.Info("load {0}", file);
-        yield return storage.LoadAssembly(VendorManager.Singleton.active, file, _version);
+        yield return storage.LoadReference(_org, _module, file, _version);
         if (null == storage.assembly)
         {
             UnityLogger.Singleton.Error(storage.error);
@@ -252,7 +252,7 @@ public class ModuleManager
         // Unity.dll
         file = string.Format("{0}.FMP.MOD.{1}.LIB.Unity.dll", _org, _module);
         UnityLogger.Singleton.Info("load {0}", file);
-        yield return storage.LoadAssembly(VendorManager.Singleton.active, file, _version);
+        yield return storage.LoadReference(_org, _module, file, _version);
         if (null == storage.assembly)
         {
             UnityLogger.Singleton.Error(storage.error);

@@ -15,6 +15,7 @@ public class Storage
     {
         get
         {
+            //return "http://localhost:9000/fmp.vendor/CD_3rdKindergarten";
             return Application.persistentDataPath;
         }
     }
@@ -196,7 +197,7 @@ public class ModuleStorage : Storage
         }
     }
 
-    public IEnumerator LoadAssembly(string _vendor, string _file, string _version)
+    public IEnumerator LoadPlugin(string _name, string _file, string _version)
     {
         statusCode = 0;
         error = "";
@@ -205,14 +206,34 @@ public class ModuleStorage : Storage
         yield return new WaitForEndOfFrame();
         if (RuntimePlatform.WebGLPlayer == Application.platform)
         {
-            throw new NotImplementedException();
-            yield break;
+            yield return loadPluginFromWeb(_name, _file, _version);
         }
+        else
+        {
+            loadPluginFromFile(_name, _file, _version);
+        }
+    }
 
-        string address = ScopePath;
-        if (!string.IsNullOrEmpty(_vendor))
-            address = Path.Combine(address, _vendor);
-        address = Path.Combine(address, "modules");
+    public IEnumerator LoadReference(string _org, string _module, string _file, string _version)
+    {
+        statusCode = 0;
+        error = "";
+        assembly = null;
+
+        yield return new WaitForEndOfFrame();
+        if (RuntimePlatform.WebGLPlayer == Application.platform)
+        {
+            yield return loadReferenceFromWeb(_org, _module, _file, _version);
+        }
+        else
+        {
+            loadReferenceFromFile(_org, _module, _file, _version);
+        }
+    }
+
+    private void loadPluginFromFile(string _name, string _file, string _version)
+    {
+        string address = Path.Combine(VendorPath, "modules");
         string file = Path.Combine(address, _file);
 
         try
@@ -224,5 +245,75 @@ public class ModuleStorage : Storage
             error = ex.Message;
         }
     }
+
+    private IEnumerator loadPluginFromWeb(string _name, string _file, string _version)
+    {
+        string version = _version;
+        if (DependencyConfig.Singleton.body.options.environment.Equals("develop"))
+            version = "develop";
+        string address = DependencyConfig.Singleton.body.options.repository;
+        address = Path.Combine(address, "plugins");
+        address = Path.Combine(address, string.Format("{0}@{1}", _name, _version));
+        string file = Path.Combine(address, _file);
+        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        {
+            uwr.downloadHandler = new DownloadHandlerBuffer();
+            yield return uwr.SendWebRequest();
+            if (uwr.result != UnityWebRequest.Result.Success)
+            {
+                statusCode = uwr.responseCode;
+                error = uwr.error;
+                yield break;
+            }
+            statusCode = 200;
+            var data = uwr.downloadHandler.data;
+            assembly = Assembly.Load(data);
+        }
+
+    }
+
+    private void loadReferenceFromFile(string _org, string _module, string _file, string _version)
+    {
+        string address = Path.Combine(VendorPath, "modules");
+        string file = Path.Combine(address, _file);
+
+        try
+        {
+            assembly = Assembly.LoadFile(file);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    private IEnumerator loadReferenceFromWeb(string _org, string _module, string _file, string _version)
+    {
+        string version = _version;
+        if (DependencyConfig.Singleton.body.options.environment.Equals("develop"))
+            version = "develop";
+        string address = DependencyConfig.Singleton.body.options.repository;
+        address = Path.Combine(address, "modules");
+        address = Path.Combine(address, _org);
+        address = Path.Combine(address, string.Format("{0}@{1}", _module, _version));
+        string file = Path.Combine(address, _file);
+        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        {
+            uwr.downloadHandler = new DownloadHandlerBuffer();
+            yield return uwr.SendWebRequest();
+            if (uwr.result != UnityWebRequest.Result.Success)
+            {
+                statusCode = uwr.responseCode;
+                error = uwr.error;
+                yield break;
+            }
+            statusCode = 200;
+            var data = uwr.downloadHandler.data;
+            assembly = Assembly.Load(data);
+        }
+
+    }
+
+
 
 }
