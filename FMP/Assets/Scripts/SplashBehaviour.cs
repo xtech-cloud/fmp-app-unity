@@ -85,7 +85,7 @@ public class SplashBehaviour : MonoBehaviour
         UnityLogger.Singleton.Info("deviceCode: {0}", deviceCode);
         applyDeviceCode(deviceCode);
 
-        if (Application.platform == RuntimePlatform.WindowsEditor)
+        if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WebGLPlayer)
         {
             StartCoroutine(enterStartup(0));
             yield break;

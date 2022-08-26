@@ -2,32 +2,32 @@
 
 public class WebLogger : Logger
 {
-    public new void Trace(string _message, params object[] _args)
+    public override void Trace(string _message, params object[] _args)
     {
         UnityEngine.Debug.Log(string.Format("TRACE - {0}", string.Format(_message, _args)));
     }
 
-    public new void Debug(string _message, params object[] _args)
+    public override void Debug(string _message, params object[] _args)
     {
         UnityEngine.Debug.Log(string.Format("DEBUG - {0}", string.Format(_message, _args)));
     }
 
-    public new void Info(string _message, params object[] _args)
+    public override void Info(string _message, params object[] _args)
     {
         UnityEngine.Debug.Log(string.Format("INFO - {0}", string.Format(_message, _args)));
     }
 
-    public new void Warning(string _message, params object[] _args)
+    public override void Warning(string _message, params object[] _args)
     {
         UnityEngine.Debug.Log(string.Format("WARNING - {0}", string.Format(_message, _args)));
     }
 
-    public new void Error(string _message, params object[] _args)
+    public override void Error(string _message, params object[] _args)
     {
         UnityEngine.Debug.Log(string.Format("ERROR - {0}", string.Format(_message, _args)));
     }
 
-    public new void Exception(System.Exception _exp)
+    public override void Exception(System.Exception _exp)
     {
         UnityEngine.Debug.LogException(_exp);
     }
@@ -42,7 +42,7 @@ public class UnityLogger : Logger
             if (null == singleton_)
             {
                 /// wasm，调用堆栈获取方法名会抛出异常
-                if (UnityEngine.Application.platform == UnityEngine.RuntimePlatform.WebGLPlayer)
+                if (UnityEngine.RuntimePlatform.WebGLPlayer == UnityEngine.Application.platform)
                     singleton_ = new WebLogger();
                 else
                     singleton_ = new UnityLogger();

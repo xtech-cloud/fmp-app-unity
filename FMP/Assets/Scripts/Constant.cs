@@ -11,8 +11,20 @@ public class Constant
             if (RuntimePlatform.WindowsPlayer == Application.platform ||
                 RuntimePlatform.WindowsEditor == Application.platform)
                 return "windows";
+            if (RuntimePlatform.LinuxPlayer == Application.platform ||
+                RuntimePlatform.LinuxEditor == Application.platform)
+                return "linux";
+            if (RuntimePlatform.OSXPlayer == Application.platform ||
+                RuntimePlatform.OSXPlayer == Application.platform)
+                return "osx";
             if (RuntimePlatform.Android == Application.platform)
                 return "android";
+            if (RuntimePlatform.IPhonePlayer == Application.platform)
+                return "ios";
+            if (RuntimePlatform.Android == Application.platform)
+                return "android";
+            if (RuntimePlatform.WebGLPlayer == Application.platform)
+                return "webgl";
             return "";
         }
     }
