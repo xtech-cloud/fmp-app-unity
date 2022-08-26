@@ -10,5 +10,11 @@
         "product": "FMP",
         "platform": "Win64",
         "output": "XTC_FMP_x64"
+    },
+    {
+        "company": "XTC",
+        "product": "FMP",
+        "platform": "Webgl",
+        "output": "XTC_FMP"
     }
 ]
