@@ -11,12 +11,22 @@ using UnityEngine.Networking;
 
 public class Storage
 {
+    public enum Mode
+    {
+        Client,
+        Browser,
+    }
+
+    public static Mode mode = Mode.Client;
+
     public static string ScopePath
     {
         get
         {
-            //return "http://localhost:9000/fmp.vendor/CD_3rdKindergarten";
-            return Application.persistentDataPath;
+            if (Mode.Browser == mode)
+                return "http://localhost:9000/fmp.vendor/CD_3rdKindergarten";
+            else
+                return Application.persistentDataPath;
         }
     }
 
@@ -161,24 +171,80 @@ public class ModuleStorage : Storage
 {
     public Assembly assembly { get; private set; } = null;
     public string config { get; private set; } = null;
+    public GameObject uab { get; private set; } = null;
 
-    public IEnumerator LoadConfig(string _vendor, string _org, string _module, string _version)
+    public IEnumerator LoadConfig(string _org, string _module, string _version)
     {
         statusCode = 0;
         error = "";
         config = null;
 
         yield return new WaitForEndOfFrame();
-        if (RuntimePlatform.WebGLPlayer == Application.platform)
+        if (Mode.Browser == mode)
         {
-            throw new NotImplementedException();
-            yield break;
+            yield return loadConfigFromWeb(_org, _module, _version);
         }
+        else
+        {
+            yield return loadConfigFromFile(_org, _module, _version);
+        }
+    }
 
-        string address = ScopePath;
-        if (!string.IsNullOrEmpty(_vendor))
-            address = Path.Combine(address, _vendor);
-        address = Path.Combine(address, "configs");
+    public IEnumerator LoadPlugin(string _name, string _file, string _version)
+    {
+        statusCode = 0;
+        error = "";
+        assembly = null;
+
+        yield return new WaitForEndOfFrame();
+        if (Mode.Browser == mode)
+        {
+            yield return loadPluginFromWeb(_name, _file, _version);
+        }
+        else
+        {
+            loadPluginFromFile(_name, _file, _version);
+        }
+    }
+
+    public IEnumerator LoadReference(string _org, string _module, string _file, string _version)
+    {
+        statusCode = 0;
+        error = "";
+        assembly = null;
+
+        yield return new WaitForEndOfFrame();
+        if (Mode.Browser == mode)
+        {
+            yield return loadReferenceFromWeb(_org, _module, _file, _version);
+        }
+        else
+        {
+            loadReferenceFromFile(_org, _module, _file, _version);
+        }
+    }
+
+    public IEnumerator LoadUAB(string _org, string _module, string _version)
+    {
+        statusCode = 0;
+        error = "";
+        uab = null;
+
+        yield return new WaitForEndOfFrame();
+        if (Mode.Browser == mode)
+        {
+            yield return loadUABFromWeb(_org, _module, _version);
+        }
+        else
+        {
+            yield return loadUABFromFile(_org, _module, _version);
+        }
+    }
+
+
+    private IEnumerator loadConfigFromFile(string _org, string _module, string _version)
+    {
+        string address = Path.Combine(VendorPath, "configs");
         string file = Path.Combine(address, string.Format("{0}_{1}.xml", _org, _module));
 
         using (UnityWebRequest uwr = UnityWebRequest.Get(file))
@@ -197,39 +263,28 @@ public class ModuleStorage : Storage
         }
     }
 
-    public IEnumerator LoadPlugin(string _name, string _file, string _version)
+    private IEnumerator loadConfigFromWeb(string _org, string _module, string _version)
     {
-        statusCode = 0;
-        error = "";
-        assembly = null;
+        string address = Path.Combine(VendorPath, "configs");
+        string file = Path.Combine(address, string.Format("{0}_{1}.xml", _org, _module));
 
-        yield return new WaitForEndOfFrame();
-        if (RuntimePlatform.WebGLPlayer == Application.platform)
+        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
         {
-            yield return loadPluginFromWeb(_name, _file, _version);
-        }
-        else
-        {
-            loadPluginFromFile(_name, _file, _version);
+            uwr.downloadHandler = new DownloadHandlerBuffer();
+            yield return uwr.SendWebRequest();
+            if (uwr.result != UnityWebRequest.Result.Success)
+            {
+                statusCode = uwr.responseCode;
+                error = uwr.error;
+                yield break;
+            }
+            statusCode = 200;
+            var data = uwr.downloadHandler.data;
+            config = Encoding.UTF8.GetString(data);
         }
     }
 
-    public IEnumerator LoadReference(string _org, string _module, string _file, string _version)
-    {
-        statusCode = 0;
-        error = "";
-        assembly = null;
 
-        yield return new WaitForEndOfFrame();
-        if (RuntimePlatform.WebGLPlayer == Application.platform)
-        {
-            yield return loadReferenceFromWeb(_org, _module, _file, _version);
-        }
-        else
-        {
-            loadReferenceFromFile(_org, _module, _file, _version);
-        }
-    }
 
     private void loadPluginFromFile(string _name, string _file, string _version)
     {
@@ -242,6 +297,7 @@ public class ModuleStorage : Storage
         }
         catch (Exception ex)
         {
+            statusCode = 500;
             error = ex.Message;
         }
     }
@@ -253,7 +309,7 @@ public class ModuleStorage : Storage
             version = "develop";
         string address = DependencyConfig.Singleton.body.options.repository;
         address = Path.Combine(address, "plugins");
-        address = Path.Combine(address, string.Format("{0}@{1}", _name, _version));
+        address = Path.Combine(address, string.Format("{0}@{1}", _name, version));
         string file = Path.Combine(address, _file);
         using (UnityWebRequest uwr = UnityWebRequest.Get(file))
         {
@@ -283,6 +339,7 @@ public class ModuleStorage : Storage
         }
         catch (Exception ex)
         {
+            statusCode = 500;
             error = ex.Message;
         }
     }
@@ -295,7 +352,7 @@ public class ModuleStorage : Storage
         string address = DependencyConfig.Singleton.body.options.repository;
         address = Path.Combine(address, "modules");
         address = Path.Combine(address, _org);
-        address = Path.Combine(address, string.Format("{0}@{1}", _module, _version));
+        address = Path.Combine(address, string.Format("{0}@{1}", _module, version));
         string file = Path.Combine(address, _file);
         using (UnityWebRequest uwr = UnityWebRequest.Get(file))
         {
@@ -314,6 +371,101 @@ public class ModuleStorage : Storage
 
     }
 
+    private IEnumerator loadUABFromFile(string _org, string _module, string _version)
+    {
+        string address = Path.Combine(VendorPath, "uabs");
+        string file = Path.Combine(address, string.Format("{0}_{1}.uab", _org.ToLower(), _module.ToLower()));
+
+        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        {
+            uwr.downloadHandler = new DownloadHandlerAssetBundle(file, 0);
+            yield return uwr.SendWebRequest();
+            if (uwr.result != UnityWebRequest.Result.Success)
+            {
+                statusCode = uwr.responseCode;
+                error = uwr.error;
+                yield break;
+            }
+            AssetBundle bundle = DownloadHandlerAssetBundle.GetContent(uwr);
+            if (null == bundle)
+            {
+                statusCode = 500;
+                error = "bundle is null";
+                yield break;
+            }
+
+            // 从包中异步加载根对象
+            var alr = bundle.LoadAssetAsync<GameObject>("[ExportRoot]");
+            yield return alr;
+            var go = alr.asset as GameObject;
+            if (null == go)
+            {
+                statusCode = 500;
+                error = "gameobject is null";
+                yield break;
+            }
+            go.SetActive(false);
+
+            // 实例化根对象
+            uab = GameObject.Instantiate<GameObject>(go);
+            statusCode = 200;
+
+            // 清理资源
+            bundle.Unload(false);
+            Resources.UnloadUnusedAssets();
+        }
+    }
+
+    private IEnumerator loadUABFromWeb(string _org, string _module, string _version)
+    {
+        string version = _version;
+        if (DependencyConfig.Singleton.body.options.environment.Equals("develop"))
+            version = "develop";
+        string address = DependencyConfig.Singleton.body.options.repository;
+        address = Path.Combine(address, "modules");
+        address = Path.Combine(address, _org);
+        address = Path.Combine(address, string.Format("{0}@{1}", _module, version));
+        string file = Path.Combine(address, string.Format("{0}_{1}@{2}.uab", _org.ToLower(), _module.ToLower(), Constant.Platform));
+
+        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        {
+            uwr.downloadHandler = new DownloadHandlerAssetBundle(file, 0);
+            yield return uwr.SendWebRequest();
+            if (uwr.result != UnityWebRequest.Result.Success)
+            {
+                statusCode = uwr.responseCode;
+                error = uwr.error;
+                yield break;
+            }
+            AssetBundle bundle = DownloadHandlerAssetBundle.GetContent(uwr);
+            if (null == bundle)
+            {
+                statusCode = 500;
+                error = "bundle is null";
+                yield break;
+            }
+
+            // 从包中异步加载根对象
+            var alr = bundle.LoadAssetAsync<GameObject>("[ExportRoot]");
+            yield return alr;
+            var go = alr.asset as GameObject;
+            if (null == go)
+            {
+                statusCode = 500;
+                error = "gameobject is null";
+                yield break;
+            }
+            go.SetActive(false);
+
+            // 实例化根对象
+            uab = GameObject.Instantiate<GameObject>(go);
+            statusCode = 200;
+
+            // 清理资源
+            bundle.Unload(false);
+            Resources.UnloadUnusedAssets();
+        }
+    }
 
 
 }

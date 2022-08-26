@@ -9,6 +9,11 @@ public class LauncherBehaviour : MonoBehaviour
     {
         UnityLogger.Singleton.Info("########### Enter Launcher Scene");
 
+        if(RuntimePlatform.WebGLPlayer == Application.platform)
+        {
+            Storage.mode = Storage.Mode.Browser;
+        }
+
         // 加载配置文件
         yield return AppConfig.Singleton.Load();
 

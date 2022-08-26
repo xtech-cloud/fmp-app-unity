@@ -14,8 +14,6 @@ public class ModuleManager
     {
         [XmlAttribute("length")]
         public int length = 1;
-        [XmlAttribute("tip")]
-        public string tip = "";
         [XmlAttribute("org")]
         public string org = "";
         [XmlAttribute("module")]
@@ -43,11 +41,12 @@ public class ModuleManager
         }
     }
 
-    public Action<int> OnUpgressChanged { get; set; }
-    public Action<string> OnTipChanged { get; set; }
+    public Action<int> OnProgressChanged { get; set; }
+    public Action<string, string> OnTipChanged { get; set; }
     public Action OnBootFinish { get; set; }
 
     public Dictionary<string, string> configs { get; private set; } = new Dictionary<string, string>();
+    public Dictionary<string, GameObject> uabs { get; private set; } = new Dictionary<string, GameObject>();
     public bool success { get; private set; } = true;
 
     private Dictionary<string, Module> modules_ = new Dictionary<string, Module>();
@@ -71,19 +70,35 @@ public class ModuleManager
 
     public IEnumerator Load()
     {
+        // 加载bootloader
+        var storage = new XmlStorage<Bootloader>();
+        yield return storage.Load(VendorManager.Singleton.active, "Bootloader.xml");
+        bootloader_ = storage.xml as Bootloader;
+
+        totalBootLength_ = 0;
+        finishedBootLength_ = 0;
+        foreach (var dependency in DependencyConfig.Singleton.body.references)
+        {
+            // config, uab, plugin, reference 
+            totalBootLength_ += 4;
+        }
+        foreach (var step in bootloader_.steps)
+        {
+            totalBootLength_ += step.length;
+        }
+
         // 加载所有模块的配置文件
         // 配置文件在这里统一加载，而不由模块自己加载，是为了在模块的Unity工程中，能将配置文件放置于编译外的代码中灵活处理。
         yield return loadConfigs();
+        if (!success)
+            yield break;
+        yield return loadAssetBundles();
         if (!success)
             yield break;
         yield return loadDependencies();
         if (!success)
             yield break;
 
-        // 加载bootloader
-        var storage = new XmlStorage<Bootloader>();
-        yield return storage.Load(VendorManager.Singleton.active, "Bootloader.xml");
-        bootloader_ = storage.xml as Bootloader;
         success = true;
     }
 
@@ -122,12 +137,6 @@ public class ModuleManager
     public void Preload()
     {
         UnityLogger.Singleton.Info("read to boot {0} steps", bootloader_.steps.Length);
-        totalBootLength_ = 0;
-        foreach (var step in bootloader_.steps)
-        {
-            totalBootLength_ += step.length;
-        }
-
         executeNextBootStep();
     }
 
@@ -152,7 +161,7 @@ public class ModuleManager
         foreach (var reference in DependencyConfig.Singleton.body.references)
         {
             UnityLogger.Singleton.Info("load config of {0}_{1}", reference.org, reference.module);
-            yield return storage.LoadConfig(VendorManager.Singleton.active, reference.org, reference.module, reference.version);
+            yield return storage.LoadConfig(reference.org, reference.module, reference.version);
             if (200 != storage.statusCode)
             {
                 UnityLogger.Singleton.Error(storage.error);
@@ -161,8 +170,33 @@ public class ModuleManager
             }
             UnityLogger.Singleton.Trace("load config of {0}_{1} success", reference.org, reference.module);
             configs[string.Format("{0}_{1}", reference.org, reference.module)] = storage.config;
+            finishedBootLength_ += 1;
+            updateProgress();
+            OnTipChanged("config", string.Format("{0}_{1}", reference.org, reference.module));
         }
     }
+
+    private IEnumerator loadAssetBundles()
+    {
+        var storage = new ModuleStorage();
+        foreach (var reference in DependencyConfig.Singleton.body.references)
+        {
+            UnityLogger.Singleton.Info("load uab of {0}_{1}", reference.org, reference.module);
+            yield return storage.LoadUAB(reference.org, reference.module, reference.version);
+            if (200 != storage.statusCode)
+            {
+                UnityLogger.Singleton.Error(storage.error);
+                success = false;
+                yield break;
+            }
+            UnityLogger.Singleton.Trace("load uab of {0}_{1} success", reference.org, reference.module);
+            uabs[string.Format("{0}_{1}", reference.org, reference.module)] = storage.uab;
+            finishedBootLength_ += 1;
+            updateProgress();
+            OnTipChanged("uab", string.Format("{0}_{1}", reference.org, reference.module));
+        }
+    }
+
 
     private IEnumerator loadDependencies()
     {
@@ -172,6 +206,10 @@ public class ModuleManager
             yield return loadPlugin(plugin.name, plugin.version);
             if (!success)
                 yield break;
+
+            finishedBootLength_ += 1;
+            updateProgress();
+            OnTipChanged("plugin", string.Format("{0}", plugin.name));
         }
 
         // 再加载reference
@@ -180,6 +218,10 @@ public class ModuleManager
             yield return loadReference(reference.org, reference.module, reference.version);
             if (!success)
                 yield break;
+
+            finishedBootLength_ += 1;
+            updateProgress();
+            OnTipChanged("reference", string.Format("{0}_{1}", reference.org, reference.module));
         }
 
         UnityLogger.Singleton.Info("finally load {0} modules", modules_.Count);
@@ -293,8 +335,8 @@ public class ModuleManager
 
         BootStep step = bootloader_.steps[currentBootStep_];
         string moduleFile = string.Format("{0}.FMP.MOD.{1}.LIB.Unity.dll", step.org, step.module);
-        UnityLogger.Singleton.Info("Boot the step, module is {0}, tip is {1}", moduleFile, step.tip);
-        OnTipChanged(step.tip);
+        UnityLogger.Singleton.Info("Boot the step {0}_{1}", moduleFile, step.org, step.module);
+        OnTipChanged("boot", string.Format("{0}_{1}", step.org, step.module));
 
         Module module;
         if (!modules_.TryGetValue(moduleFile, out module))
@@ -326,9 +368,14 @@ public class ModuleManager
         BootStep step = bootloader_.steps[currentBootStep_];
         finishedBootLength_ += step.length;
 
-        OnUpgressChanged(finishedBootLength_ * 100 / totalBootLength_);
+        updateProgress();
 
         currentBootStep_ += 1;
         executeNextBootStep();
+    }
+
+    private void updateProgress()
+    {
+        OnProgressChanged(finishedBootLength_ * 100 / totalBootLength_);
     }
 }

@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using MVCS = XTC.FMP.LIB.MVCS;
+using Newtonsoft.Json;
 
 public class StartupBehaviour : MonoBehaviour
 {
@@ -19,23 +20,23 @@ public class StartupBehaviour : MonoBehaviour
         }
     }
 
-
     public Transform mainCanvas;
     public GameObject bootloader;
     public Text textBootloaderTip;
     public Text textBootloaderUpgress;
     public Font mainFont;
+    public TextAsset startupTip;
 
     private MVCS.Framework framework;
     private ModuleManager moduleManager;
     private AppConfig.Vendor activeVendor_;
+    private bool isReady_ = false;
+    private Dictionary<string, string> uiTip_;
 
-    IEnumerator Start()
+    void Awake()
     {
         UnityLogger.Singleton.Info("########### Enter Startup Scene");
-
-        UnityLogger.Singleton.Info("---------------  Start ------------------------");
-
+        uiTip_ = JsonConvert.DeserializeObject<Dictionary<string, string>>(startupTip.text);
         bootloader.SetActive(true);
         textBootloaderTip.text = "";
         textBootloaderUpgress.text = "";
@@ -56,10 +57,19 @@ public class StartupBehaviour : MonoBehaviour
         );
         canvasScaler.matchWidthOrHeight = activeVendor_.graphics.referenceResolution.match;
 
-        // 加载模块
         moduleManager = new ModuleManager();
+        moduleManager.OnTipChanged = (_category, _tip) => textBootloaderTip.text = string.Format(uiTip_[_category], _tip);
+        moduleManager.OnProgressChanged = (_percentage) => textBootloaderUpgress.text = _percentage.ToString();
+        moduleManager.OnBootFinish = () => bootloader.SetActive(false);
+    }
+
+    IEnumerator Start()
+    {
+        UnityLogger.Singleton.Info("---------------  Start ------------------------");
+
+        // 加载模块
         yield return moduleManager.Load();
-        if(!moduleManager.success)
+        if (!moduleManager.success)
             yield break;
 
         // 初始化MVCS框架
@@ -74,15 +84,16 @@ public class StartupBehaviour : MonoBehaviour
 
         // 加载模块
         Dictionary<string, MVCS.Any> settings = new Dictionary<string, MVCS.Any>();
-        moduleManager.OnTipChanged = (_tip) => textBootloaderTip.text = _tip;
-        moduleManager.OnUpgressChanged = (_percentage) => textBootloaderUpgress.text = _percentage.ToString();
-        moduleManager.OnBootFinish = () => bootloader.SetActive(false);
         settings["vendor"] = MVCS.Any.FromString(activeVendor_.scope);
         settings["datapath"] = MVCS.Any.FromString(Storage.ScopePath);
         settings["devicecode"] = MVCS.Any.FromString(Constant.DeviceCode);
         settings["platform"] = MVCS.Any.FromString(Constant.Platform);
-        settings["main.canvas"] = MVCS.Any.FromObject(mainCanvas);
-        settings["main.font"] = MVCS.Any.FromObject(mainFont);
+        settings["canvas.main"] = MVCS.Any.FromObject(mainCanvas);
+        settings["font.main"] = MVCS.Any.FromObject(mainFont);
+        foreach (var pair in moduleManager.uabs)
+        {
+            settings[string.Format("uab.{0}", pair.Key)] = MVCS.Any.FromObject(pair.Value);
+        }
         // 注册模块中的MVCS
         moduleManager.Inject(this, framework, logger, config, settings);
         moduleManager.Register();
@@ -90,6 +101,7 @@ public class StartupBehaviour : MonoBehaviour
         // 装载已注册的部件
         framework.Setup();
 
+        isReady_ = true;
         yield return new WaitForEndOfFrame();
         UnityLogger.Singleton.Info("++++++++++++++++++++++++++++++++++++++++++++++++");
         UnityLogger.Singleton.Info("+ Preload Modules                              +");
@@ -105,6 +117,8 @@ public class StartupBehaviour : MonoBehaviour
     {
         UnityLogger.Singleton.Info("---------------  OnDestroy ------------------------");
 
+        if (!isReady_)
+            return;
         framework.Dismantle();
         // 拆卸模块中的MVCS
         moduleManager.Cancel();
