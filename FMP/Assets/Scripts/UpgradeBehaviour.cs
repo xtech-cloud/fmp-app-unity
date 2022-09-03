@@ -30,7 +30,9 @@ public class UpgradeBehaviour : MonoBehaviour
             public Transform root;
             public Slider sliderTotal;
             public Slider sliderSingle;
-            public Text textTip;
+            public Text textHash;
+            public Text textTotalSize;
+            public Text textFinishSize;
         }
 
         [Serializable]
@@ -115,7 +117,9 @@ public class UpgradeBehaviour : MonoBehaviour
         });
         ui.updatingPanel.sliderTotal.value = 0;
         ui.updatingPanel.sliderSingle.value = 0;
-        ui.updatingPanel.textTip.text = "";
+        ui.updatingPanel.textHash.text = "";
+        ui.updatingPanel.textTotalSize.text = "";
+        ui.updatingPanel.textFinishSize.text = "";
 
         switchPanel(Panel.NONE);
     }
@@ -151,7 +155,9 @@ public class UpgradeBehaviour : MonoBehaviour
 
     private void Update()
     {
-        ui.updatingPanel.textTip.text = string.Format(uiTip_.downloading_tip, upgrade_.updateEntryHash);
+        ui.updatingPanel.textHash.text = upgrade_.updateEntryHash;
+        ui.updatingPanel.textFinishSize.text = formatSize(upgrade_.updateFinishedSize);
+        ui.updatingPanel.textTotalSize.text = formatSize(upgrade_.updateTotalSize);
         ui.updatingPanel.sliderTotal.value = upgrade_.updateTotalSize > 0 ? (upgrade_.updateFinishedSize * 100 / upgrade_.updateTotalSize) / 100f : 0;
         ui.updatingPanel.sliderTotal.value = upgrade_.updateEntryProgress;
     }

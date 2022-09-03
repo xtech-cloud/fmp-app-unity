@@ -725,7 +725,9 @@ MonoBehaviour:
       root: {fileID: 4744012473357670964}
       sliderTotal: {fileID: 4744012473285086659}
       sliderSingle: {fileID: 4744012473617317582}
-      textTip: {fileID: 4744012473228285797}
+      textHash: {fileID: 4744012473133841397}
+      textTotalSize: {fileID: 4744012474606461742}
+      textFinishSize: {fileID: 4744012474014960944}
     updateErrorPanel:
       root: {fileID: 4744012473889282661}
       tip: {fileID: 4744012473318049739}
@@ -1229,7 +1231,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2041954718
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1735,7 +1737,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 
+  m_Text: ???????????????????????????
 --- !u!224 &4744012473133841398
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1815,7 +1817,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u6B63\u5728\u66F4\u65B0{0}"
+  m_Text: "\u6B63\u5728\u66F4\u65B0"
 --- !u!224 &4744012473228285798
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2147,7 +2149,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1.5
-  m_Text: "\u672C\u6B21\u66F4\u65B0\u5171\u6709{0}\u4E2A\u6587\u4EF6\u4E0B\u8F7D\u5931\u8D25\uFF0C\n\u4F1A\u5728\u4E0B\u6B21\u7A0B\u5E8F\u542F\u52A8\u540E\u518D\u6B21\u5C1D\u8BD5\u4E0B\u8F7D\u3002"
+  m_Text: "\u672C\u6B21\u66F4\u65B0\u5171\u6709{0}\u4E2A\u6587\u4EF6\u4E0B\u8F7D\u5931\u8D25\u3002"
 --- !u!224 &4744012473334019587
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2818,7 +2820,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!222 &4744012473927099333
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2901,7 +2903,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 
+  m_Text: ??????
 --- !u!224 &4744012474014960945
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3327,7 +3329,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 
+  m_Text: ????
 --- !u!224 &4744012474606461743
 RectTransform:
   m_ObjectHideFlags: 0
