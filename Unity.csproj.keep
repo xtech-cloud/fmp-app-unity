@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>XTC.FMP.APP.Unity</AssemblyName>
-    <Version>1.8.0</Version>
+    <Version>{{VERSION}}</Version>
     <RootNamespace />
   </PropertyGroup>
 
