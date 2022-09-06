@@ -185,7 +185,7 @@ public class Upgrade
 
             // 下载清单文件
             UnityLogger.Singleton.Debug("pull {0}", manifestTask.url);
-            using (UnityWebRequest uwr = UnityWebRequest.Get(manifestTask.url))
+            using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(manifestTask.url)))
             {
                 uwr.downloadHandler = new DownloadHandlerBuffer();
                 yield return uwr.SendWebRequest();
@@ -314,7 +314,7 @@ public class Upgrade
 
         // 开始下载文件
         updateEntryHash = task.hash;
-        fileWebRequest_ = UnityWebRequest.Get(task.url);
+        fileWebRequest_ = UnityWebRequest.Get(new Uri(task.url));
         // 下载到缓存目录中
         UnityLogger.Singleton.Trace("download {0}", task.saveAs);
         string saveAsPath = Path.Combine(Storage.UpgradeCachePath, task.saveAs);

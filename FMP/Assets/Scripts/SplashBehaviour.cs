@@ -96,6 +96,7 @@ public class SplashBehaviour : MonoBehaviour
         if (200 != storage.statusCode)
         {
             txtError.text = uiTip_.license_not_found;
+            UnityLogger.Singleton.Error(storage.error);
             yield break;
         }
         int expiry = 0;

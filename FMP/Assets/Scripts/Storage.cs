@@ -60,7 +60,7 @@ public class Storage
         statusCode = 0;
         bytes = null;
         error = "";
-        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(file)))
         {
             uwr.downloadHandler = new DownloadHandlerBuffer();
             yield return uwr.SendWebRequest();
@@ -149,7 +149,7 @@ public class SpriteStorage : Storage
         statusCode = 0;
         sprite = null;
         error = "";
-        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(file)))
         {
             DownloadHandlerTexture handler = new DownloadHandlerTexture(true);
             uwr.downloadHandler = handler;
@@ -247,7 +247,7 @@ public class ModuleStorage : Storage
         string address = Path.Combine(VendorPath, "configs");
         string file = Path.Combine(address, string.Format("{0}_{1}.xml", _org, _module));
 
-        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(file)))
         {
             uwr.downloadHandler = new DownloadHandlerBuffer();
             yield return uwr.SendWebRequest();
@@ -268,7 +268,7 @@ public class ModuleStorage : Storage
         string address = Path.Combine(VendorPath, "configs");
         string file = Path.Combine(address, string.Format("{0}_{1}.xml", _org, _module));
 
-        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(file)))
         {
             uwr.downloadHandler = new DownloadHandlerBuffer();
             yield return uwr.SendWebRequest();
@@ -311,7 +311,7 @@ public class ModuleStorage : Storage
         address = Path.Combine(address, "plugins");
         address = Path.Combine(address, string.Format("{0}@{1}", _name, version));
         string file = Path.Combine(address, _file);
-        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(file)))
         {
             uwr.downloadHandler = new DownloadHandlerBuffer();
             yield return uwr.SendWebRequest();
@@ -354,7 +354,7 @@ public class ModuleStorage : Storage
         address = Path.Combine(address, _org);
         address = Path.Combine(address, string.Format("{0}@{1}", _module, version));
         string file = Path.Combine(address, _file);
-        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(file)))
         {
             uwr.downloadHandler = new DownloadHandlerBuffer();
             yield return uwr.SendWebRequest();
@@ -376,7 +376,7 @@ public class ModuleStorage : Storage
         string address = Path.Combine(VendorPath, "uabs");
         string file = Path.Combine(address, string.Format("{0}_{1}.uab", _org.ToLower(), _module.ToLower()));
 
-        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(file)))
         {
             uwr.downloadHandler = new DownloadHandlerAssetBundle(file, 0);
             yield return uwr.SendWebRequest();
@@ -427,7 +427,7 @@ public class ModuleStorage : Storage
         address = Path.Combine(address, string.Format("{0}@{1}", _module, version));
         string file = Path.Combine(address, string.Format("{0}_{1}@{2}.uab", _org.ToLower(), _module.ToLower(), Constant.Platform));
 
-        using (UnityWebRequest uwr = UnityWebRequest.Get(file))
+        using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(file)))
         {
             uwr.downloadHandler = new DownloadHandlerAssetBundle(file, 0);
             yield return uwr.SendWebRequest();
