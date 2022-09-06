@@ -1,15 +1,33 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+public class Bu
+{
+    public string AppKey { get; set; }
+    public string AppSecret { get; set; }
+}
+
 public class LauncherBehaviour : MonoBehaviour
 {
+    public TextAsset businessBranch;
+
     IEnumerator Start()
     {
         UnityLogger.Singleton.Info("########### Enter Launcher Scene");
 
-        if(RuntimePlatform.WebGLPlayer == Application.platform)
+        if (null != businessBranch)
+        {
+            string text = businessBranch.text;
+            var schema = JsonConvert.DeserializeObject<BusinessBranch.Schema>(text);
+            BusinessBranch.Security.RewriteAppKey(schema.AppKey);
+            BusinessBranch.Security.RewriteAppSecret(schema.AppSecret);
+        }
+
+
+        if (RuntimePlatform.WebGLPlayer == Application.platform)
         {
             Storage.mode = Storage.Mode.Browser;
         }

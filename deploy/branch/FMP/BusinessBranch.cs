@@ -2,7 +2,23 @@
 {
     public static class Security
     {
-        public const string AppKey = "";
-        public const string AppSecret = "";
+        public static string AppKey { get; private set; } = "";
+        public static string AppSecret { get; private set; } = "";
+
+        public static void RewriteAppKey(string _appKey)
+        {
+            AppKey = _appKey;
+        }
+
+        public static void RewriteAppSecret(string _appSecret)
+        {
+            AppSecret = _appSecret;
+        }
+    }
+
+    public class Schema
+    {
+        public string AppKey { get; set; } = "";
+        public string AppSecret { get; set; } = "";
     }
 }
