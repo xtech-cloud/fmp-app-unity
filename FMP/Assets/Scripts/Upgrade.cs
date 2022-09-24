@@ -24,7 +24,7 @@ public class Upgrade
 
     public class Schema
     {
-        public class Field 
+        public class Field
         {
             [XmlAttribute("attribute")]
             public string attribute { get; set; } = "";
@@ -50,8 +50,8 @@ public class Upgrade
         public Body body { get; set; } = new Body();
 
         [XmlArray("Header"), XmlArrayItem("Field")]
-        public Field[] fields{ get; set; } = new Field[] {
-            new Field 
+        public Field[] fields { get; set; } = new Field[] {
+            new Field
             {
                 attribute = "Update.strategy",
                 values = "升级策略，可选值为：skip, auto, manual",
@@ -149,6 +149,11 @@ public class Upgrade
             xmlTask.url = string.Format("{0}/{1}_{2}.xml", address, reference.org, reference.module);
             xmlTask.saveAs = string.Format("configs/_{0}_{1}.xml", reference.org, reference.module);
             fileTasks_.Add(xmlTask);
+
+            var jsonTask = new FileTask();
+            jsonTask.url = string.Format("{0}/{1}_{2}.json", address, reference.org, reference.module);
+            jsonTask.saveAs = string.Format("catalogs/_{0}_{1}.json", reference.org, reference.module);
+            fileTasks_.Add(jsonTask);
         }
 
         foreach (var plugin in DependencyConfig.Singleton.body.plugins)
@@ -246,6 +251,7 @@ public class Upgrade
             // 任何一个需要更新的文件，如果在仓库中找不到，都报错
             if (string.IsNullOrEmpty(fileTask.hash))
             {
+                UnityLogger.Singleton.Error("{0} not found in repo", fileTask.url);
                 errorCode = ErrorCode.ENTRY_NOTFOUNDINREPO;
                 yield break;
             }
@@ -269,6 +275,8 @@ public class Upgrade
             Directory.CreateDirectory(Path.Combine(Storage.VendorPath, "modules"));
         if (!Directory.Exists(Path.Combine(Storage.VendorPath, "configs")))
             Directory.CreateDirectory(Path.Combine(Storage.VendorPath, "configs"));
+        if (!Directory.Exists(Path.Combine(Storage.VendorPath, "catalogs")))
+            Directory.CreateDirectory(Path.Combine(Storage.VendorPath, "catalogs"));
         if (!Directory.Exists(Path.Combine(Storage.VendorPath, "uabs")))
             Directory.CreateDirectory(Path.Combine(Storage.VendorPath, "uabs"));
 

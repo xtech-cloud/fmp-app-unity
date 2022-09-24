@@ -171,6 +171,7 @@ public class ModuleStorage : Storage
 {
     public Assembly assembly { get; private set; } = null;
     public string config { get; private set; } = null;
+    public string catalog { get; private set; } = null;
     public GameObject uab { get; private set; } = null;
 
     public IEnumerator LoadConfig(string _org, string _module, string _version)
@@ -187,6 +188,23 @@ public class ModuleStorage : Storage
         else
         {
             yield return loadConfigFromFile(_org, _module, _version);
+        }
+    }
+
+    public IEnumerator LoadCatalog(string _org, string _module, string _version)
+    {
+        statusCode = 0;
+        error = "";
+        catalog = null;
+
+        yield return new WaitForEndOfFrame();
+        if (Mode.Browser == mode)
+        {
+            yield return loadCatalogFromWeb(_org, _module, _version);
+        }
+        else
+        {
+            yield return loadCatalogFromFile(_org, _module, _version);
         }
     }
 
@@ -283,8 +301,47 @@ public class ModuleStorage : Storage
             config = Encoding.UTF8.GetString(data);
         }
     }
+    private IEnumerator loadCatalogFromFile(string _org, string _module, string _version)
+    {
+        string address = Path.Combine(VendorPath, "catalogs");
+        string file = Path.Combine(address, string.Format("{0}_{1}.json", _org, _module));
 
+        using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(file)))
+        {
+            uwr.downloadHandler = new DownloadHandlerBuffer();
+            yield return uwr.SendWebRequest();
+            if (uwr.result != UnityWebRequest.Result.Success)
+            {
+                statusCode = uwr.responseCode;
+                error = uwr.error;
+                yield break;
+            }
+            statusCode = 200;
+            var data = uwr.downloadHandler.data;
+            catalog = Encoding.UTF8.GetString(data);
+        }
+    }
 
+    private IEnumerator loadCatalogFromWeb(string _org, string _module, string _version)
+    {
+        string address = Path.Combine(VendorPath, "catalogs");
+        string file = Path.Combine(address, string.Format("{0}_{1}.json", _org, _module));
+
+        using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(file)))
+        {
+            uwr.downloadHandler = new DownloadHandlerBuffer();
+            yield return uwr.SendWebRequest();
+            if (uwr.result != UnityWebRequest.Result.Success)
+            {
+                statusCode = uwr.responseCode;
+                error = uwr.error;
+                yield break;
+            }
+            statusCode = 200;
+            var data = uwr.downloadHandler.data;
+            catalog = Encoding.UTF8.GetString(data);
+        }
+    }
 
     private void loadPluginFromFile(string _name, string _file, string _version)
     {

@@ -79,8 +79,8 @@ public class ModuleManager
         finishedBootLength_ = 0;
         foreach (var dependency in DependencyConfig.Singleton.body.references)
         {
-            // config, uab, plugin, reference 
-            totalBootLength_ += 4;
+            // config, catalog, uab, plugin, reference 
+            totalBootLength_ += 5;
         }
         foreach (var step in bootloader_.steps)
         {
@@ -90,6 +90,9 @@ public class ModuleManager
         // 加载所有模块的配置文件
         // 配置文件在这里统一加载，而不由模块自己加载，是为了在模块的Unity工程中，能将配置文件放置于编译外的代码中灵活处理。
         yield return loadConfigs();
+        if (!success)
+            yield break;
+        yield return loadCatalogs();
         if (!success)
             yield break;
         yield return loadAssetBundles();
@@ -169,12 +172,34 @@ public class ModuleManager
                 yield break;
             }
             UnityLogger.Singleton.Trace("load config of {0}_{1} success", reference.org, reference.module);
-            configs[string.Format("{0}_{1}", reference.org, reference.module)] = storage.config;
+            configs[string.Format("{0}_{1}.xml", reference.org, reference.module)] = storage.config;
             finishedBootLength_ += 1;
             updateProgress();
             OnTipChanged("config", string.Format("{0}_{1}", reference.org, reference.module));
         }
     }
+
+    private IEnumerator loadCatalogs()
+    {
+        var storage = new ModuleStorage();
+        foreach (var reference in DependencyConfig.Singleton.body.references)
+        {
+            UnityLogger.Singleton.Info("load catalog of {0}_{1}", reference.org, reference.module);
+            yield return storage.LoadCatalog(reference.org, reference.module, reference.version);
+            if (200 != storage.statusCode)
+            {
+                UnityLogger.Singleton.Error(storage.error);
+                success = false;
+                yield break;
+            }
+            UnityLogger.Singleton.Trace("load catalog of {0}_{1} success", reference.org, reference.module);
+            configs[string.Format("{0}_{1}.json", reference.org, reference.module)] = storage.catalog;
+            finishedBootLength_ += 1;
+            updateProgress();
+            OnTipChanged("catalog", string.Format("{0}_{1}", reference.org, reference.module));
+        }
+    }
+
 
     private IEnumerator loadAssetBundles()
     {
