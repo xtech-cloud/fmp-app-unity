@@ -41,6 +41,9 @@ public class SplashBehaviour : MonoBehaviour
     private Dictionary<string, string> verifyCodeMap = new Dictionary<string, string>();
     private AppConfig.Vendor activeVendor_;
 
+    private int quitClikCount_ = 0;
+    private float quitClikTimer_ = 0;
+
     // Start is called before the first frame update
     void Awake()
     {
@@ -69,6 +72,28 @@ public class SplashBehaviour : MonoBehaviour
             }
         }
 
+        txtDeviceCode.GetComponent<Button>().onClick.AddListener(() =>
+        {
+            if (quitClikCount_ > 15)
+            {
+                txtDeviceCode.gameObject.SetActive(false);
+                return;
+            }
+            quitClikCount_ += 1;
+            quitClikTimer_ = Time.timeSinceLevelLoad;
+        });
+        imgQRCode.GetComponent<Button>().onClick.AddListener(() =>
+        {
+            if (quitClikCount_ < 15)
+                return;
+            quitClikCount_ += 1;
+            quitClikTimer_ = Time.timeSinceLevelLoad;
+            if (quitClikCount_ > 30)
+            {
+                Debug.Log("QUIT");
+                Application.Quit();
+            }
+        });
     }
 
     IEnumerator Start()
@@ -121,6 +146,14 @@ public class SplashBehaviour : MonoBehaviour
             delay = 6;
         }
         yield return enterStartup(delay);
+    }
+
+    private void Update()
+    {
+        if (Time.timeSinceLevelLoad - quitClikTimer_ > 1f)
+        {
+            quitClikCount_ = 0;
+        }
     }
 
     private IEnumerator enterStartup(float _time)
