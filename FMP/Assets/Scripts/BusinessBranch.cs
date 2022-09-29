@@ -9,6 +9,7 @@ namespace BusinessBranch
 
         public static string StorageAddress { get; private set; } = "http://localhost:9000";
         public static string StorageVendorRootDir { get; private set; } = "fmp.vendor/unity";
+        public static string StorageAssloudRootDir { get; private set; } = "fmp.assloud";
 
         public static void RewriteAppKey(string _appKey)
         {

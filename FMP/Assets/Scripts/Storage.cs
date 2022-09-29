@@ -47,6 +47,39 @@ public class Storage
         }
     }
 
+    /// <summary>
+    /// 主题路径（绝对路径）
+    /// </summary>
+    public static string ThemesPath
+    {
+        get
+        {
+            string path = Path.Combine(RootPath, VendorDir);
+            path = Path.Combine(path, "themes");
+            return path;
+        }
+    }
+
+    /// <summary>
+    /// 资源路径（绝对路径）
+    /// </summary>
+    public static string AssetsPath
+    {
+        get
+        {
+            if (Mode.Browser == mode)
+            {
+                return Path.Combine(RootPath, BusinessBranch.Security.StorageAssloudRootDir);
+            }
+            else
+            {
+                string path = Path.Combine(RootPath, VendorDir);
+                path = Path.Combine(path, "assets");
+                return path;
+            }
+        }
+    }
+
     public static string UpgradeCachePath
     {
         get

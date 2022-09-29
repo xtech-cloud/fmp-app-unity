@@ -21,7 +21,7 @@ public class SelectorBehaviour : MonoBehaviour
 
         templateVendor.SetActive(false);
 
-        UnityLogger.Singleton.Info("active vendor is {0}", VendorManager.Singleton.active);
+        UnityLogger.Singleton.Info("active vendor is {0}", VendorManager.Singleton.activeUuid);
 
         // 如果有激活的vendor，跳转到splash
         if (null != VendorManager.Singleton.active)
@@ -34,6 +34,7 @@ public class SelectorBehaviour : MonoBehaviour
         foreach (var vendorDir in Directory.GetDirectories(Storage.RootPath))
         {
             string vendorName = Path.GetFileName(vendorDir);
+            UnityLogger.Singleton.Info("load meta.json of vendor:{0}", vendorName);
             Storage storage = new Storage();
             yield return storage.ReadBytesFromRoot(Path.Combine(vendorName, "meta.json"));
             if (!string.IsNullOrEmpty(storage.error))

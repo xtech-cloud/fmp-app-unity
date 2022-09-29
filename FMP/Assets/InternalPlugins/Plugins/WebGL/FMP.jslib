@@ -1,9 +1,10 @@
 var FMP = {
-    GetParameters: function()
+    QueryVendor: function()
     {
-        var returnStr = window.location.search;
-        var buffer = _malloc(lengthBytesUTF8(returnStr)+1);
-        writeStringToMemory(returnStr, buffer);
+        const query = window.location.search;
+        const vendor = new URLSearchParams(query).get('vendor');
+        var buffer = _malloc(lengthBytesUTF8(vendor)+1);
+        writeStringToMemory(vendor, buffer);
         return buffer;
     }
 }

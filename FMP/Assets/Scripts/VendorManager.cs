@@ -23,9 +23,12 @@ public class VendorManager
 
     public IEnumerator Activate(string _vendorUuid)
     {
+        if (string.IsNullOrEmpty(_vendorUuid))
+            yield break;
         activeUuid = _vendorUuid;
 
         Storage storage = new Storage();
+        UnityLogger.Singleton.Info("ready active vendor:{0}", _vendorUuid);
         yield return storage.ReadBytesFromVendor("meta.json");
         if (!string.IsNullOrEmpty(storage.error))
         {

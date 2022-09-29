@@ -49,10 +49,19 @@ public class StartupBehaviour : MonoBehaviour
         );
         canvasScaler.matchWidthOrHeight = activeVendor.GraphicsReferenceResolutionMatch;
 
-        moduleManager = new ModuleManager();
+        moduleManager = ModuleManager.Singleton;
         moduleManager.OnTipChanged = (_category, _tip) => textBootloaderTip.text = string.Format(uiTip_[_category], _tip);
         moduleManager.OnProgressChanged = (_percentage) => textBootloaderUpgress.text = _percentage.ToString();
         moduleManager.OnBootFinish = () => bootloader.SetActive(false);
+
+        if(RuntimePlatform.WebGLPlayer == Constant.Platform)
+        {
+            var go = Resources.Load<GameObject>("__ModulesExport__");
+            if(null != go)
+            {
+                GameObject.Instantiate(go);
+            }
+        }
     }
 
     IEnumerator Start()
@@ -71,20 +80,10 @@ public class StartupBehaviour : MonoBehaviour
         framework.setConfig(config);
         framework.Initialize();
 
-        // 处理Vendor路径
-        string vendorDir = Storage.VendorDir;
-        int pos = vendorDir.IndexOf(VendorManager.Singleton.activeUuid);
-        if(pos >=0)
-        {
-            vendorDir = vendorDir.Substring(0, pos);
-        }
-        string vendorRootPath = Path.Combine(Storage.RootPath, vendorDir).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        if(vendorRootPath.EndsWith("/"))
-            vendorRootPath = vendorRootPath.Substring(0, vendorRootPath.Length - 1);
         // 加载模块
         Dictionary<string, MVCS.Any> settings = new Dictionary<string, MVCS.Any>();
-        settings["vendor"] = MVCS.Any.FromString(VendorManager.Singleton.activeUuid);
-        settings["datapath"] = MVCS.Any.FromString(vendorRootPath);
+        settings["path.themes"] = MVCS.Any.FromString(Storage.ThemesPath);
+        settings["path.assets"] = MVCS.Any.FromString(Storage.AssetsPath);
         settings["devicecode"] = MVCS.Any.FromString(Constant.DeviceCode);
         settings["platform"] = MVCS.Any.FromString(Constant.PlatformAlias);
         settings["canvas.main"] = MVCS.Any.FromObject(mainCanvas);

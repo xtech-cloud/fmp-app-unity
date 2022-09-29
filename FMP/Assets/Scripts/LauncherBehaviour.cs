@@ -11,7 +11,7 @@ public class LauncherBehaviour : MonoBehaviour
     public TextAsset businessBranch;
 
     [DllImport("__Internal")]
-    private static extern string GetParamters();
+    private static extern string QueryVendor();
 
 
     IEnumerator Start()
@@ -39,26 +39,17 @@ public class LauncherBehaviour : MonoBehaviour
 
     IEnumerator launcherWebGL()
     {
-        /*
         Storage.mode = Storage.Mode.Browser;
-        string parameters = GetParamters();
-        UnityLogger.Singleton.Info("parameter is {0}", parameters);
-        if(string.IsNullOrEmpty(parameters))
+        string vendorUuid = QueryVendor();
+        UnityLogger.Singleton.Info("vendor is {0}", vendorUuid);
+        if(string.IsNullOrEmpty(vendorUuid))
         {
             yield return launcherStandard();
             yield break;
         }
 
-        string vendor = "c3632f9a-6d8a-4f3d-8b69-3fe7562290f7";
-        var strs = parameters.Split("&");
-        foreach(var str in strs)
-        {
-        }
-        */
-
         Storage.mode = Storage.Mode.Browser;
         BusinessBranch.Security.RewriteStorageAddress("http://minio.xtech.cloud");
-        string vendorUuid = "c3632f9a-6d8a-4f3d-8b69-3fe7562290f7";
         yield return VendorManager.Singleton.Activate(vendorUuid);
         SceneManager.LoadScene("selector");
     }

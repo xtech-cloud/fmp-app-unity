@@ -34,7 +34,6 @@ public class Constant
         get
         {
             return Application.platform;
-            //return RuntimePlatform.WebGLPlayer;
         }
     }
 

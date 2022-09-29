@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Xml.Serialization;
@@ -60,12 +61,46 @@ public class ModuleManager
     private Action<int> onBootStepProgress_;
     private Action<string> onBootStepFinish_;
 
+    private static ModuleManager singleton_ = null;
+
+    public static ModuleManager Singleton
+    {
+        get
+        {
+            if (null == singleton_)
+                singleton_ = new ModuleManager();
+            return singleton_;
+        }
+    }
 
     public ModuleManager()
     {
         AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(assemblyResolve);
         onBootStepProgress_ = this.handleBootStepProgress;
         onBootStepFinish_ = this.handleBootStepFinish;
+    }
+
+    /// <summary>
+    /// 不能使用运行时加载程序集时，使用此方法注册工程中的程序集
+    /// </summary>
+    public void ExportModule(Assembly _assembly, string _org, string _module)
+    {
+        string namespacePrefix = string.Format("{0}.FMP.MOD.{1}", _org, _module);
+        string assemblyFile = namespacePrefix + ".LIB.Unity.dll";
+        string entryClassName = string.Format("{0}.LIB.Unity.MyEntry", namespacePrefix);
+        UnityLogger.Singleton.Info("Create Instance of {0}", entryClassName);
+        try
+        {
+            object instanceEntry = _assembly.CreateInstance(entryClassName);
+            Type entryClass = _assembly.GetType(entryClassName);
+            Module module = new Module(_assembly, instanceEntry, entryClass, namespacePrefix);
+            modules_[assemblyFile] = module;
+        }
+        catch (Exception ex)
+        {
+            UnityLogger.Singleton.Exception(ex);
+            success = false;
+        }
     }
 
     public IEnumerator Load()
@@ -286,17 +321,6 @@ public class ModuleManager
             //WASM 不支持运行时加载程序集
             UnityLogger.Singleton.Warning("WASM not support load assembly at runtime, so ignore this operation, make sure all assemblies included at build stage.");
 
-            Assembly assembly = null;
-            string namespacePrefix = string.Format("{0}.FMP.MOD.{1}", _org, _module);
-            foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                if (a.FullName.StartsWith(namespacePrefix))
-                {
-                    assembly = a;
-                    break;
-                }
-            }
-            addModule(assembly, _org, _module, namespacePrefix+".LIB.Unity.dll");
             success = true;
             yield break;
         }
@@ -359,22 +383,15 @@ public class ModuleManager
         filename = Path.GetFileName(file);
         assemblies_[filename] = storage.assembly;
 
-        addModule(storage.assembly, _org, _module, filename);
-    }
-
-    private void addModule(Assembly _assembly, string _org, string _module, string _filename)
-    {
-        Assembly entryAssembly = _assembly;
-
         string namespacePrefix = string.Format("{0}.FMP.MOD.{1}", _org, _module);
         string entryClassName = string.Format("{0}.LIB.Unity.MyEntry", namespacePrefix);
         UnityLogger.Singleton.Info("Create Instance of {0}", entryClassName);
         try
         {
-            object instanceEntry = entryAssembly.CreateInstance(entryClassName);
-            Type entryClass = entryAssembly.GetType(entryClassName);
-            Module module = new Module(entryAssembly, instanceEntry, entryClass, namespacePrefix);
-            modules_[_filename] = module;
+            object instanceEntry = storage.assembly.CreateInstance(entryClassName);
+            Type entryClass = storage.assembly.GetType(entryClassName);
+            Module module = new Module(storage.assembly, instanceEntry, entryClass, namespacePrefix);
+            modules_[filename] = module;
         }
         catch (Exception ex)
         {
