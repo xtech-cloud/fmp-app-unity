@@ -4,28 +4,37 @@ using System.Security.Cryptography;
 
 public class Constant
 {
-    public static string Platform
+    public static string PlatformAlias
     {
         get
         {
-            if (RuntimePlatform.WindowsPlayer == Application.platform ||
-                RuntimePlatform.WindowsEditor == Application.platform)
+            if (RuntimePlatform.WindowsPlayer == Platform||
+                RuntimePlatform.WindowsEditor == Platform)
                 return "windows";
-            if (RuntimePlatform.LinuxPlayer == Application.platform ||
-                RuntimePlatform.LinuxEditor == Application.platform)
+            if (RuntimePlatform.LinuxPlayer == Platform||
+                RuntimePlatform.LinuxEditor == Platform)
                 return "linux";
-            if (RuntimePlatform.OSXPlayer == Application.platform ||
-                RuntimePlatform.OSXPlayer == Application.platform)
+            if (RuntimePlatform.OSXPlayer == Platform ||
+                RuntimePlatform.OSXPlayer == Platform)
                 return "osx";
-            if (RuntimePlatform.Android == Application.platform)
+            if (RuntimePlatform.Android == Platform)
                 return "android";
-            if (RuntimePlatform.IPhonePlayer == Application.platform)
+            if (RuntimePlatform.IPhonePlayer == Platform)
                 return "ios";
-            if (RuntimePlatform.Android == Application.platform)
+            if (RuntimePlatform.Android == Platform)
                 return "android";
-            if (RuntimePlatform.WebGLPlayer == Application.platform)
+            if (RuntimePlatform.WebGLPlayer == Platform)
                 return "webgl";
             return "";
+        }
+    }
+
+    public static RuntimePlatform Platform
+    {
+        get
+        {
+            return Application.platform;
+            //return RuntimePlatform.WebGLPlayer;
         }
     }
 

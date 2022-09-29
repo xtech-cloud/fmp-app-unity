@@ -127,15 +127,15 @@ public class UpgradeBehaviour : MonoBehaviour
 
     private IEnumerator Start()
     {
-        // Browser 不更新，在模块加载时下载
-        if (RuntimePlatform.WebGLPlayer == Application.platform)
+        // WASM 不支持程序集运行时加载，
+        if (RuntimePlatform.WebGLPlayer == Constant.Platform)
         {
             enterStartup(0);
             yield break;
         }
 
-        var storage = new XmlStorage<Upgrade.Schema>();
-        yield return storage.Load(VendorManager.Singleton.active, "Upgrade.xml");
+        var storage = new XmlStorage();
+        yield return storage.LoadFromVendor<Upgrade.Schema>("Upgrade.xml");
         schema_ = storage.xml as Upgrade.Schema;
         UnityLogger.Singleton.Info("Strategy of Update is {0}", schema_.body.update.strategy);
 

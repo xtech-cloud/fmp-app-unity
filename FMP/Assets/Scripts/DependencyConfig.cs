@@ -84,8 +84,8 @@ public class DependencyConfig
     public IEnumerator Load()
     {
         UnityLogger.Singleton.Info("ready to load Dependency.xml ...");
-        var storage = new XmlStorage<Schema>();
-        yield return storage.Load(VendorManager.Singleton.active, "Dependency.xml");
+        var storage = new XmlStorage();
+        yield return storage.LoadFromVendor<Schema>("Dependency.xml");
         schema_ = storage.xml as Schema;
     }
 }

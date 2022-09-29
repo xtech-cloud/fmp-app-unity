@@ -19,12 +19,12 @@ public class WebLogger : Logger
 
     public override void Warning(string _message, params object[] _args)
     {
-        UnityEngine.Debug.Log(string.Format("WARNING - {0}", string.Format(_message, _args)));
+        UnityEngine.Debug.LogWarning(string.Format("WARNING - {0}", string.Format(_message, _args)));
     }
 
     public override void Error(string _message, params object[] _args)
     {
-        UnityEngine.Debug.Log(string.Format("ERROR - {0}", string.Format(_message, _args)));
+        UnityEngine.Debug.LogError(string.Format("ERROR - {0}", string.Format(_message, _args)));
     }
 
     public override void Exception(System.Exception _exp)
@@ -42,7 +42,7 @@ public class UnityLogger : Logger
             if (null == singleton_)
             {
                 /// wasm，调用堆栈获取方法名会抛出异常
-                if (UnityEngine.RuntimePlatform.WebGLPlayer == UnityEngine.Application.platform)
+                if (UnityEngine.RuntimePlatform.WebGLPlayer == Constant.Platform)
                     singleton_ = new WebLogger();
                 else
                     singleton_ = new UnityLogger();

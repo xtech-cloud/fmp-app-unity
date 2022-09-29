@@ -270,15 +270,16 @@ public class Upgrade
 
     public IEnumerator OverwriteDependencies(Schema _schema)
     {
+        string vendorPath = Path.Combine(Storage.RootPath, Storage.VendorDir);
         yield return new UnityEngine.WaitForEndOfFrame();
-        if (!Directory.Exists(Path.Combine(Storage.VendorPath, "modules")))
-            Directory.CreateDirectory(Path.Combine(Storage.VendorPath, "modules"));
-        if (!Directory.Exists(Path.Combine(Storage.VendorPath, "configs")))
-            Directory.CreateDirectory(Path.Combine(Storage.VendorPath, "configs"));
-        if (!Directory.Exists(Path.Combine(Storage.VendorPath, "catalogs")))
-            Directory.CreateDirectory(Path.Combine(Storage.VendorPath, "catalogs"));
-        if (!Directory.Exists(Path.Combine(Storage.VendorPath, "uabs")))
-            Directory.CreateDirectory(Path.Combine(Storage.VendorPath, "uabs"));
+        if (!Directory.Exists(Path.Combine(vendorPath, "modules")))
+            Directory.CreateDirectory(Path.Combine(vendorPath, "modules"));
+        if (!Directory.Exists(Path.Combine(vendorPath, "configs")))
+            Directory.CreateDirectory(Path.Combine(vendorPath, "configs"));
+        if (!Directory.Exists(Path.Combine(vendorPath, "catalogs")))
+            Directory.CreateDirectory(Path.Combine(vendorPath, "catalogs"));
+        if (!Directory.Exists(Path.Combine(vendorPath, "uabs")))
+            Directory.CreateDirectory(Path.Combine(vendorPath, "uabs"));
 
         foreach (var task in fileTasks_)
         {
@@ -288,7 +289,7 @@ public class Upgrade
             try
             {
 
-                File.Copy(Path.Combine(Storage.UpgradeCachePath, task.saveAs), Path.Combine(Storage.VendorPath, task.saveAs), true);
+                File.Copy(Path.Combine(Storage.UpgradeCachePath, task.saveAs), Path.Combine(vendorPath, task.saveAs), true);
                 File.Delete(Path.Combine(Storage.UpgradeCachePath, task.saveAs));
             }
             catch (Exception ex)
@@ -351,7 +352,7 @@ public class Upgrade
     private string getPlatformSuffix()
     {
         string suffix = "";
-        switch (UnityEngine.Application.platform)
+        switch (Constant.Platform)
         {
             case UnityEngine.RuntimePlatform.WindowsPlayer:
                 suffix = "@windows";

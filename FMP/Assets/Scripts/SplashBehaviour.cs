@@ -39,7 +39,7 @@ public class SplashBehaviour : MonoBehaviour
 
     private UiTip uiTip_;
     private Dictionary<string, string> verifyCodeMap = new Dictionary<string, string>();
-    private AppConfig.Vendor activeVendor_;
+    private Vendor activeVendor_;
 
     private int quitClikCount_ = 0;
     private float quitClikTimer_ = 0;
@@ -49,6 +49,7 @@ public class SplashBehaviour : MonoBehaviour
     {
         canvas.gameObject.SetActive(false);
         UnityLogger.Singleton.Info("########### Enter Splash Scene");
+        activeVendor_ = VendorManager.Singleton.active; 
 
         txtVersion.text = "ver " + Application.version;
 
@@ -62,15 +63,6 @@ public class SplashBehaviour : MonoBehaviour
         verifyCodeMap["verify_code_7"] = uiTip_.verify_code_7;
         verifyCodeMap["verify_code_8"] = uiTip_.verify_code_8;
         verifyCodeMap["verify_code_14"] = uiTip_.verify_code_14;
-
-        foreach (var vendor in AppConfig.Singleton.body.vendorSelector.vendors)
-        {
-            if (vendor.scope.Equals(VendorManager.Singleton.active))
-            {
-                activeVendor_ = vendor;
-                break;
-            }
-        }
 
         txtDeviceCode.GetComponent<Button>().onClick.AddListener(() =>
         {
@@ -110,14 +102,14 @@ public class SplashBehaviour : MonoBehaviour
         UnityLogger.Singleton.Info("deviceCode: {0}", deviceCode);
         applyDeviceCode(deviceCode);
 
-        if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WebGLPlayer)
+        if (Constant.Platform == RuntimePlatform.WindowsEditor || Constant.Platform == RuntimePlatform.WebGLPlayer)
         {
             StartCoroutine(enterStartup(0));
             yield break;
         }
 
         Storage storage = new Storage();
-        yield return storage.ReadBytes(null, "app.cer");
+        yield return storage.ReadBytesFromRoot("app.cer");
         if (200 != storage.statusCode)
         {
             txtError.text = uiTip_.license_not_found;
@@ -167,7 +159,7 @@ public class SplashBehaviour : MonoBehaviour
         }
 
         Storage storage = new Storage();
-        yield return storage.ReadBytes(activeVendor_.scope, "meta.json");
+        yield return storage.ReadBytesFromVendor("meta.json");
         if (200 != storage.statusCode)
         {
             txtError.text = uiTip_.vendor_directory_none;
@@ -239,28 +231,28 @@ public class SplashBehaviour : MonoBehaviour
             yield break;
 
         // 设置画质
-        Application.targetFrameRate = activeVendor_.graphics.fps;
-        QualitySettings.SetQualityLevel(activeVendor_.graphics.quality);
+        Application.targetFrameRate = activeVendor_.GraphicsFPS;
+        QualitySettings.SetQualityLevel(activeVendor_.GraphicsQuality);
 
         var resolution = Screen.currentResolution;
         int width = resolution.width;
         int height = resolution.height;
         // 获取最接近参考分辨率的分辨率
-        if (activeVendor_.graphics.pixelResolution.Equals("auto"))
+        if (activeVendor_.GraphicsPixelResolution.Equals("auto"))
         {
             int min = int.MaxValue;
             foreach (var r in Screen.resolutions)
             {
                 int d = 0;
-                if (activeVendor_.graphics.referenceResolution.match > 0.5)
+                if (activeVendor_.GraphicsReferenceResolutionMatch > 0.5)
                 {
                     // 适配高度
-                    d = Math.Abs(r.height - activeVendor_.graphics.referenceResolution.height);
+                    d = Math.Abs(r.height - activeVendor_.GraphicsReferenceResolutionHeight);
                 }
                 else
                 {
                     // 适配宽度
-                    d = Math.Abs(r.width - activeVendor_.graphics.referenceResolution.width);
+                    d = Math.Abs(r.width - activeVendor_.GraphicsReferenceResolutionWidth);
                 }
                 if (d <= min)
                 {
@@ -270,9 +262,9 @@ public class SplashBehaviour : MonoBehaviour
                 }
             }
         }
-        else if (activeVendor_.graphics.pixelResolution.Contains("x"))
+        else if (activeVendor_.GraphicsPixelResolution.Contains("x"))
         {
-            string[] str = activeVendor_.graphics.pixelResolution.Split('x');
+            string[] str = activeVendor_.GraphicsPixelResolution.Split('x');
             if (!int.TryParse(str[0], out width))
                 width = resolution.width;
             if (!int.TryParse(str[1], out height))
@@ -288,12 +280,12 @@ public class SplashBehaviour : MonoBehaviour
             yield break;
 
         SpriteStorage storage = new SpriteStorage();
-        yield return storage.Load(activeVendor_.scope, activeVendor_.skin.splash.background);
+        yield return storage.LoadFromVendor(activeVendor_.SkinSplashBackground);
         if (null != storage.sprite)
         {
             imgBackground.sprite = storage.sprite;
         }
-        yield return storage.Load(activeVendor_.scope, activeVendor_.skin.splash.slogan);
+        yield return storage.LoadFromVendor(activeVendor_.SkinSplashSlogan);
         if (null != storage.sprite)
         {
             imgSlogan.sprite = storage.sprite;

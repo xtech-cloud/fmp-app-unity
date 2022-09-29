@@ -29,7 +29,6 @@ public class StartupBehaviour : MonoBehaviour
 
     private MVCS.Framework framework;
     private ModuleManager moduleManager;
-    private AppConfig.Vendor activeVendor_;
     private bool isReady_ = false;
     private Dictionary<string, string> uiTip_;
 
@@ -41,21 +40,14 @@ public class StartupBehaviour : MonoBehaviour
         textBootloaderTip.text = "";
         textBootloaderUpgress.text = "";
 
-        foreach (var vendor in AppConfig.Singleton.body.vendorSelector.vendors)
-        {
-            if (vendor.scope.Equals(VendorManager.Singleton.active))
-            {
-                activeVendor_ = vendor;
-                break;
-            }
-        }
+        Vendor activeVendor = VendorManager.Singleton.active;
 
         var canvasScaler = mainCanvas.GetComponent<CanvasScaler>();
         canvasScaler.referenceResolution = new Vector2(
-            activeVendor_.graphics.referenceResolution.width,
-            activeVendor_.graphics.referenceResolution.height
+            activeVendor.GraphicsReferenceResolutionWidth,
+            activeVendor.GraphicsReferenceResolutionHeight
         );
-        canvasScaler.matchWidthOrHeight = activeVendor_.graphics.referenceResolution.match;
+        canvasScaler.matchWidthOrHeight = activeVendor.GraphicsReferenceResolutionMatch;
 
         moduleManager = new ModuleManager();
         moduleManager.OnTipChanged = (_category, _tip) => textBootloaderTip.text = string.Format(uiTip_[_category], _tip);
@@ -74,20 +66,27 @@ public class StartupBehaviour : MonoBehaviour
 
         // 初始化MVCS框架
         MVCS.Config config = new MVCSConfig(moduleManager.configs);
-        UnityLogger uniLogger = new UnityLogger();
-        MVCS.Logger logger = uniLogger;
-        logger.setLevel((MVCS.LogLevel)AppConfig.Singleton.body.logger.level);
         framework = new MVCS.Framework();
-        framework.setLogger(logger);
+        framework.setLogger(UnityLogger.Singleton);
         framework.setConfig(config);
         framework.Initialize();
 
+        // 处理Vendor路径
+        string vendorDir = Storage.VendorDir;
+        int pos = vendorDir.IndexOf(VendorManager.Singleton.activeUuid);
+        if(pos >=0)
+        {
+            vendorDir = vendorDir.Substring(0, pos);
+        }
+        string vendorRootPath = Path.Combine(Storage.RootPath, vendorDir).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        if(vendorRootPath.EndsWith("/"))
+            vendorRootPath = vendorRootPath.Substring(0, vendorRootPath.Length - 1);
         // 加载模块
         Dictionary<string, MVCS.Any> settings = new Dictionary<string, MVCS.Any>();
-        settings["vendor"] = MVCS.Any.FromString(activeVendor_.scope);
-        settings["datapath"] = MVCS.Any.FromString(Storage.ScopePath);
+        settings["vendor"] = MVCS.Any.FromString(VendorManager.Singleton.activeUuid);
+        settings["datapath"] = MVCS.Any.FromString(vendorRootPath);
         settings["devicecode"] = MVCS.Any.FromString(Constant.DeviceCode);
-        settings["platform"] = MVCS.Any.FromString(Constant.Platform);
+        settings["platform"] = MVCS.Any.FromString(Constant.PlatformAlias);
         settings["canvas.main"] = MVCS.Any.FromObject(mainCanvas);
         settings["font.main"] = MVCS.Any.FromObject(mainFont);
         foreach (var pair in moduleManager.uabs)
@@ -95,7 +94,7 @@ public class StartupBehaviour : MonoBehaviour
             settings[string.Format("uab.{0}", pair.Key)] = MVCS.Any.FromObject(pair.Value);
         }
         // 注册模块中的MVCS
-        moduleManager.Inject(this, framework, logger, config, settings);
+        moduleManager.Inject(this, framework, UnityLogger.Singleton, config, settings);
         moduleManager.Register();
 
         // 装载已注册的部件

@@ -71,8 +71,9 @@ public class ModuleManager
     public IEnumerator Load()
     {
         // 加载bootloader
-        var storage = new XmlStorage<Bootloader>();
-        yield return storage.Load(VendorManager.Singleton.active, "Bootloader.xml");
+        var storage = new XmlStorage();
+        UnityLogger.Singleton.Info("load Bootloader.xml ...");
+        yield return storage.LoadFromVendor<Bootloader>("Bootloader.xml");
         bootloader_ = storage.xml as Bootloader;
 
         totalBootLength_ = 0;
@@ -164,7 +165,7 @@ public class ModuleManager
         foreach (var reference in DependencyConfig.Singleton.body.references)
         {
             UnityLogger.Singleton.Info("load config of {0}_{1}", reference.org, reference.module);
-            yield return storage.LoadConfig(reference.org, reference.module, reference.version);
+            yield return storage.LoadConfigFromVendor(reference.org, reference.module, reference.version);
             if (200 != storage.statusCode)
             {
                 UnityLogger.Singleton.Error(storage.error);
@@ -185,7 +186,7 @@ public class ModuleManager
         foreach (var reference in DependencyConfig.Singleton.body.references)
         {
             UnityLogger.Singleton.Info("load catalog of {0}_{1}", reference.org, reference.module);
-            yield return storage.LoadCatalog(reference.org, reference.module, reference.version);
+            yield return storage.LoadCatalogFromVendor(reference.org, reference.module, reference.version);
             if (200 != storage.statusCode)
             {
                 UnityLogger.Singleton.Error(storage.error);
@@ -254,6 +255,14 @@ public class ModuleManager
 
     private IEnumerator loadPlugin(string _name, string _version)
     {
+        if (RuntimePlatform.WebGLPlayer == Constant.Platform)
+        {
+            //WASM 不支持运行时加载程序集
+            UnityLogger.Singleton.Warning("WASM not support load assembly at runtime, so ignore this operation, make sure all assemblies included at build stage.");
+            success = true;
+            yield break;
+        }
+
         string file = _name + ".dll";
         var storage = new ModuleStorage();
         UnityLogger.Singleton.Info("load {0}", file);
@@ -272,6 +281,26 @@ public class ModuleManager
 
     private IEnumerator loadReference(string _org, string _module, string _version)
     {
+        if (RuntimePlatform.WebGLPlayer == Constant.Platform)
+        {
+            //WASM 不支持运行时加载程序集
+            UnityLogger.Singleton.Warning("WASM not support load assembly at runtime, so ignore this operation, make sure all assemblies included at build stage.");
+
+            Assembly assembly = null;
+            string namespacePrefix = string.Format("{0}.FMP.MOD.{1}", _org, _module);
+            foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (a.FullName.StartsWith(namespacePrefix))
+                {
+                    assembly = a;
+                    break;
+                }
+            }
+            addModule(assembly, _org, _module, namespacePrefix+".LIB.Unity.dll");
+            success = true;
+            yield break;
+        }
+
         var storage = new ModuleStorage();
 
         // proto.dll
@@ -330,7 +359,12 @@ public class ModuleManager
         filename = Path.GetFileName(file);
         assemblies_[filename] = storage.assembly;
 
-        Assembly entryAssembly = storage.assembly;
+        addModule(storage.assembly, _org, _module, filename);
+    }
+
+    private void addModule(Assembly _assembly, string _org, string _module, string _filename)
+    {
+        Assembly entryAssembly = _assembly;
 
         string namespacePrefix = string.Format("{0}.FMP.MOD.{1}", _org, _module);
         string entryClassName = string.Format("{0}.LIB.Unity.MyEntry", namespacePrefix);
@@ -340,7 +374,7 @@ public class ModuleManager
             object instanceEntry = entryAssembly.CreateInstance(entryClassName);
             Type entryClass = entryAssembly.GetType(entryClassName);
             Module module = new Module(entryAssembly, instanceEntry, entryClass, namespacePrefix);
-            modules_[filename] = module;
+            modules_[_filename] = module;
         }
         catch (Exception ex)
         {
