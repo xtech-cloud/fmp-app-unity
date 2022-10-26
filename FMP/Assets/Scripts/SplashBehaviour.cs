@@ -49,7 +49,7 @@ public class SplashBehaviour : MonoBehaviour
     {
         canvas.gameObject.SetActive(false);
         UnityLogger.Singleton.Info("########### Enter Splash Scene");
-        activeVendor_ = VendorManager.Singleton.active; 
+        activeVendor_ = VendorManager.Singleton.active;
 
         txtVersion.text = "ver " + Application.version;
 
@@ -158,16 +158,7 @@ public class SplashBehaviour : MonoBehaviour
             yield break;
         }
 
-        Storage storage = new Storage();
-        yield return storage.ReadBytesFromVendor("meta.json");
-        if (200 != storage.statusCode)
-        {
-            txtError.text = uiTip_.vendor_directory_none;
-            yield break;
-        }
-
-        yield return DependencyConfig.Singleton.Load();
-        SceneManager.LoadScene("upgrade");
+        SceneManager.LoadScene("FrameworkUpdate");
     }
 
     private void applyDeviceCode(string _code)
@@ -231,28 +222,28 @@ public class SplashBehaviour : MonoBehaviour
             yield break;
 
         // 设置画质
-        Application.targetFrameRate = activeVendor_.GraphicsFPS;
-        QualitySettings.SetQualityLevel(activeVendor_.GraphicsQuality);
+        Application.targetFrameRate = activeVendor_.schema.GraphicsFPS;
+        QualitySettings.SetQualityLevel(activeVendor_.schema.GraphicsQuality);
 
         var resolution = Screen.currentResolution;
         int width = resolution.width;
         int height = resolution.height;
         // 获取最接近参考分辨率的分辨率
-        if (activeVendor_.GraphicsPixelResolution.Equals("auto"))
+        if (activeVendor_.schema.GraphicsPixelResolution.Equals("auto"))
         {
             int min = int.MaxValue;
             foreach (var r in Screen.resolutions)
             {
                 int d = 0;
-                if (activeVendor_.GraphicsReferenceResolutionMatch > 0.5)
+                if (activeVendor_.schema.GraphicsReferenceResolutionMatch > 0.5)
                 {
                     // 适配高度
-                    d = Math.Abs(r.height - activeVendor_.GraphicsReferenceResolutionHeight);
+                    d = Math.Abs(r.height - activeVendor_.schema.GraphicsReferenceResolutionHeight);
                 }
                 else
                 {
                     // 适配宽度
-                    d = Math.Abs(r.width - activeVendor_.GraphicsReferenceResolutionWidth);
+                    d = Math.Abs(r.width - activeVendor_.schema.GraphicsReferenceResolutionWidth);
                 }
                 if (d <= min)
                 {
@@ -262,9 +253,9 @@ public class SplashBehaviour : MonoBehaviour
                 }
             }
         }
-        else if (activeVendor_.GraphicsPixelResolution.Contains("x"))
+        else if (activeVendor_.schema.GraphicsPixelResolution.Contains("x"))
         {
-            string[] str = activeVendor_.GraphicsPixelResolution.Split('x');
+            string[] str = activeVendor_.schema.GraphicsPixelResolution.Split('x');
             if (!int.TryParse(str[0], out width))
                 width = resolution.width;
             if (!int.TryParse(str[1], out height))
@@ -280,12 +271,12 @@ public class SplashBehaviour : MonoBehaviour
             yield break;
 
         SpriteStorage storage = new SpriteStorage();
-        yield return storage.LoadFromVendor(activeVendor_.SkinSplashBackground);
+        yield return storage.LoadFromVendor(activeVendor_.schema.SkinSplashBackground);
         if (null != storage.sprite)
         {
             imgBackground.sprite = storage.sprite;
         }
-        yield return storage.LoadFromVendor(activeVendor_.SkinSplashSlogan);
+        yield return storage.LoadFromVendor(activeVendor_.schema.SkinSplashSlogan);
         if (null != storage.sprite)
         {
             imgSlogan.sprite = storage.sprite;

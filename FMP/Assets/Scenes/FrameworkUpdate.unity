@@ -737,7 +737,7 @@ MonoBehaviour:
       root: {fileID: 1123316981}
     updateFailurePanel:
       root: {fileID: 2041954718}
-  upgradeTip: {fileID: 4900000, guid: 728aa503657648b4aaad4b3910f12796, type: 3}
+  updateTip: {fileID: 4900000, guid: 728aa503657648b4aaad4b3910f12796, type: 3}
 --- !u!1 &1113257902
 GameObject:
   m_ObjectHideFlags: 0

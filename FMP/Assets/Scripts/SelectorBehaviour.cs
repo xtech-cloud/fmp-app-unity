@@ -15,7 +15,7 @@ public class SelectorBehaviour : MonoBehaviour
         // WebGL跳过选择
         if (RuntimePlatform.WebGLPlayer == Constant.Platform)
         {
-            SceneManager.LoadScene("splash");
+            SceneManager.LoadScene("Splash");
             yield break;
         }
 
@@ -26,7 +26,7 @@ public class SelectorBehaviour : MonoBehaviour
         // 如果有激活的vendor，跳转到splash
         if (null != VendorManager.Singleton.active)
         {
-            SceneManager.LoadScene("splash");
+            SceneManager.LoadScene("Splash");
             yield break;
         }
 
@@ -53,8 +53,8 @@ public class SelectorBehaviour : MonoBehaviour
                 continue;
             }
             var clone = GameObject.Instantiate(templateVendor, templateVendor.transform.parent);
-            clone.name = vendor.Name;
-            clone.transform.Find("text").GetComponent<Text>().text = vendor.Display;
+            clone.name = vendor.schema.Name;
+            clone.transform.Find("text").GetComponent<Text>().text = vendor.schema.Display;
             clone.gameObject.SetActive(true);
             clone.GetComponent<Button>().onClick.AddListener(() =>
             {
@@ -67,6 +67,6 @@ public class SelectorBehaviour : MonoBehaviour
     {
 
         yield return VendorManager.Singleton.Activate(_vendor);
-        SceneManager.LoadScene("splash");
+        SceneManager.LoadScene("Splash");
     }
 }

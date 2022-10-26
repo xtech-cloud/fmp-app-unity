@@ -1,16 +1,10 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class UpgradeBehaviour : MonoBehaviour
+public class FrameworkUpdateBehaviour : MonoBehaviour
 {
     [Serializable]
     public class Ui
@@ -67,14 +61,14 @@ public class UpgradeBehaviour : MonoBehaviour
 
     public class UiTip
     {
-        public string upgrade_parse_failure;
+        public string update_parse_failure;
         public string dependencies_update_tip;
         public string dependencies_error;
         public string downloading_tip;
     }
 
     public Ui ui;
-    public TextAsset upgradeTip;
+    public TextAsset updateTip;
 
     public enum Panel
     {
@@ -86,15 +80,14 @@ public class UpgradeBehaviour : MonoBehaviour
         SUCCESS,
     }
 
-    private Upgrade.Schema schema_;
-
-    private Upgrade upgrade_ = new Upgrade();
+    private FrameworkUpdate frameworkUpdate_ = new FrameworkUpdate();
     private UiTip uiTip_;
+    private string updateStrategy_;
 
     private void Awake()
     {
-        UnityLogger.Singleton.Info("########### Enter Upgrade Scene");
-        uiTip_ = JsonUtility.FromJson<UiTip>(upgradeTip.text);
+        UnityLogger.Singleton.Info("########### Enter FrameworkUpdate Scene");
+        uiTip_ = JsonUtility.FromJson<UiTip>(updateTip.text);
 
         ui.root.gameObject.SetActive(true);
         ui.updateErrorPanel.btnSkip.onClick.AddListener(() =>
@@ -134,32 +127,30 @@ public class UpgradeBehaviour : MonoBehaviour
             yield break;
         }
 
-        var storage = new XmlStorage();
-        yield return storage.LoadFromVendor<Upgrade.Schema>("Upgrade.xml");
-        schema_ = storage.xml as Upgrade.Schema;
-        UnityLogger.Singleton.Info("Strategy of Update is {0}", schema_.body.update.strategy);
+        updateStrategy_ = VendorManager.Singleton.active.updateConfig.schema.body.frameworkUpdate.strategy;
+        UnityLogger.Singleton.Info("Strategy of FrameworkUpdate is {0}", updateStrategy_);
 
-        if (schema_.body.update.strategy.Equals("skip"))
+        if (updateStrategy_.Equals("skip"))
         {
-            UnityLogger.Singleton.Warning("skip upgrade");
+            UnityLogger.Singleton.Warning("skip frameworkupdate");
             enterStartup(0);
             yield break;
         }
 
-        // 升级流程参见设计文档中的升级流程说明
-        // !!! 升级操作会将文件下载到缓存目录中，如果所有文件下载成功，才会将缓存目录中的文件拷贝到虚拟环境中，
+        // 更新流程参见设计文档中的更新流程说明
+        // !!! 更新操作会将文件下载到缓存目录中，如果所有文件下载成功，才会将缓存目录中的文件拷贝到虚拟环境中，
         // 如果任何一个文件下载失败，虚拟环境中的文件不会发生变化
-        upgrade_.ParseSchema(schema_);
+        frameworkUpdate_.ParseSchema();
         yield return updateDependencies();
     }
 
     private void Update()
     {
-        ui.updatingPanel.textHash.text = upgrade_.updateEntryHash;
-        ui.updatingPanel.textFinishSize.text = formatSize(upgrade_.updateFinishedSize);
-        ui.updatingPanel.textTotalSize.text = formatSize(upgrade_.updateTotalSize);
-        ui.updatingPanel.sliderTotal.value = upgrade_.updateTotalSize > 0 ? (upgrade_.updateFinishedSize * 100 / upgrade_.updateTotalSize) / 100f : 0;
-        ui.updatingPanel.sliderTotal.value = upgrade_.updateEntryProgress;
+        ui.updatingPanel.textHash.text = frameworkUpdate_.updateEntryHash;
+        ui.updatingPanel.textFinishSize.text = formatSize(frameworkUpdate_.updateFinishedSize);
+        ui.updatingPanel.textTotalSize.text = formatSize(frameworkUpdate_.updateTotalSize);
+        ui.updatingPanel.sliderTotal.value = frameworkUpdate_.updateTotalSize > 0 ? (frameworkUpdate_.updateFinishedSize * 100 / frameworkUpdate_.updateTotalSize) / 100f : 0;
+        ui.updatingPanel.sliderTotal.value = frameworkUpdate_.updateEntryProgress;
     }
 
     private void enterStartup(float _delay)
@@ -170,22 +161,22 @@ public class UpgradeBehaviour : MonoBehaviour
     private IEnumerator delayEnterStartup(float _delay)
     {
         yield return new WaitForSeconds(_delay);
-        SceneManager.LoadScene("startup");
+        SceneManager.LoadScene("Startup");
     }
 
     private IEnumerator updateDependencies()
     {
         UnityLogger.Singleton.Info("check dependencies ......");
-        yield return upgrade_.CheckDependencies(schema_);
-        if (Upgrade.ErrorCode.OK != upgrade_.errorCode)
+        yield return frameworkUpdate_.CheckDependencies();
+        if (FrameworkUpdate.ErrorCode.OK != frameworkUpdate_.errorCode)
         {
             //检查阶段有错误
-            UnityLogger.Singleton.Error("check dependencies has error: {0}", upgrade_.errorCode.ToString());
-            if (schema_.body.update.strategy.Equals("manual"))
+            UnityLogger.Singleton.Error("check dependencies has error: {0}", frameworkUpdate_.errorCode.ToString());
+            if (updateStrategy_.Equals("manual"))
             {
                 // 手动模式弹出错误提示
                 switchPanel(Panel.ERROR);
-                ui.updateErrorPanel.tip.text = string.Format(uiTip_.dependencies_error, upgrade_.errorCode.ToString());
+                ui.updateErrorPanel.tip.text = string.Format(uiTip_.dependencies_error, frameworkUpdate_.errorCode.ToString());
             }
             else
             {
@@ -197,18 +188,18 @@ public class UpgradeBehaviour : MonoBehaviour
         }
 
         // 检查阶段没有错误
-        if (schema_.body.update.strategy.Equals("manual"))
+        if (updateStrategy_.Equals("manual"))
         {
             // 没有数据需要更新
-            UnityLogger.Singleton.Info("ready to download dependencies, totalSize is {0}, finishedSize is {1}", upgrade_.updateTotalSize, upgrade_.updateFinishedSize);
-            if (upgrade_.updateFinishedSize >= upgrade_.updateTotalSize)
+            UnityLogger.Singleton.Info("ready to download dependencies, totalSize is {0}, finishedSize is {1}", frameworkUpdate_.updateTotalSize, frameworkUpdate_.updateFinishedSize);
+            if (frameworkUpdate_.updateFinishedSize >= frameworkUpdate_.updateTotalSize)
             {
                 enterStartup(0);
                 yield break;
             }
-            // 手动模式弹出升级提示
+            // 手动模式弹出更新提示
             switchPanel(Panel.TIP);
-            ui.updateTipPanel.tip.text = string.Format(uiTip_.dependencies_update_tip, formatSize(upgrade_.updateTotalSize - upgrade_.updateFinishedSize));
+            ui.updateTipPanel.tip.text = string.Format(uiTip_.dependencies_update_tip, formatSize(frameworkUpdate_.updateTotalSize - frameworkUpdate_.updateFinishedSize));
             yield break;
         }
 
@@ -218,25 +209,25 @@ public class UpgradeBehaviour : MonoBehaviour
 
     private IEnumerator downloadDependencies()
     {
-        UnityLogger.Singleton.Info("ready to download dependencies, totalSize is {0}, finishedSize is {1}", upgrade_.updateTotalSize, upgrade_.updateFinishedSize);
+        UnityLogger.Singleton.Info("ready to download dependencies, totalSize is {0}, finishedSize is {1}", frameworkUpdate_.updateTotalSize, frameworkUpdate_.updateFinishedSize);
         // 没有数据需要更新
-        if (upgrade_.updateFinishedSize >= upgrade_.updateTotalSize)
+        if (frameworkUpdate_.updateFinishedSize >= frameworkUpdate_.updateTotalSize)
         {
             enterStartup(0);
             yield break;
         }
 
         switchPanel(Panel.UPDATING);
-        yield return upgrade_.DownloadDependencies(schema_);
+        yield return frameworkUpdate_.DownloadDependencies();
         // 有错误
-        if (Upgrade.ErrorCode.OK != upgrade_.errorCode)
+        if (FrameworkUpdate.ErrorCode.OK != frameworkUpdate_.errorCode)
         {
-            UnityLogger.Singleton.Error("download has error: {0}", upgrade_.errorCode.ToString());
-            if (schema_.body.update.strategy.Equals("manual"))
+            UnityLogger.Singleton.Error("download has error: {0}", frameworkUpdate_.errorCode.ToString());
+            if (updateStrategy_.Equals("manual"))
             {
                 // 手动模式弹出错误提示
                 switchPanel(Panel.ERROR);
-                ui.updateErrorPanel.tip.text = string.Format(uiTip_.dependencies_error, upgrade_.errorCode.ToString());
+                ui.updateErrorPanel.tip.text = string.Format(uiTip_.dependencies_error, frameworkUpdate_.errorCode.ToString());
             }
             else
             {
@@ -250,9 +241,9 @@ public class UpgradeBehaviour : MonoBehaviour
         UnityLogger.Singleton.Info("all dependencies download success");
         switchPanel(Panel.SUCCESS);
         yield return new WaitForEndOfFrame();
-        yield return upgrade_.OverwriteDependencies(schema_);
+        yield return frameworkUpdate_.OverwriteDependencies();
         // 有错误
-        if (Upgrade.ErrorCode.OK != upgrade_.errorCode)
+        if (FrameworkUpdate.ErrorCode.OK != frameworkUpdate_.errorCode)
         {
 
             switchPanel(Panel.FAILURE);

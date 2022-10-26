@@ -44,10 +44,10 @@ public class StartupBehaviour : MonoBehaviour
 
         var canvasScaler = mainCanvas.GetComponent<CanvasScaler>();
         canvasScaler.referenceResolution = new Vector2(
-            activeVendor.GraphicsReferenceResolutionWidth,
-            activeVendor.GraphicsReferenceResolutionHeight
+            activeVendor.schema.GraphicsReferenceResolutionWidth,
+            activeVendor.schema.GraphicsReferenceResolutionHeight
         );
-        canvasScaler.matchWidthOrHeight = activeVendor.GraphicsReferenceResolutionMatch;
+        canvasScaler.matchWidthOrHeight = activeVendor.schema.GraphicsReferenceResolutionMatch;
 
         moduleManager = ModuleManager.Singleton;
         moduleManager.OnTipChanged = (_category, _tip) => textBootloaderTip.text = string.Format(uiTip_[_category], _tip);

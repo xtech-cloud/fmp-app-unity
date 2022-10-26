@@ -11,22 +11,6 @@ using MVCS = XTC.FMP.LIB.MVCS;
 
 public class ModuleManager
 {
-    public class BootStep
-    {
-        [XmlAttribute("length")]
-        public int length = 1;
-        [XmlAttribute("org")]
-        public string org = "";
-        [XmlAttribute("module")]
-        public string module = "";
-    }
-
-    public class Bootloader
-    {
-        [XmlArray("Steps"), XmlArrayItem("Step")]
-        public BootStep[] steps { get; set; } = new BootStep[0];
-    }
-
     public class Module
     {
         public Assembly assembly { get; private set; }
@@ -52,7 +36,6 @@ public class ModuleManager
 
     private Dictionary<string, Module> modules_ = new Dictionary<string, Module>();
     private Dictionary<string, Assembly> assemblies_ = new Dictionary<string, Assembly>();
-    private Bootloader bootloader_ = new Bootloader();
     private int currentBootStep_ = 0;
     // 引导的总长度
     private int totalBootLength_ = 0;
@@ -105,20 +88,14 @@ public class ModuleManager
 
     public IEnumerator Load()
     {
-        // 加载bootloader
-        var storage = new XmlStorage();
-        UnityLogger.Singleton.Info("load Bootloader.xml ...");
-        yield return storage.LoadFromVendor<Bootloader>("Bootloader.xml");
-        bootloader_ = storage.xml as Bootloader;
-
         totalBootLength_ = 0;
         finishedBootLength_ = 0;
-        foreach (var dependency in DependencyConfig.Singleton.body.references)
+        foreach (var dependency in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
         {
             // config, catalog, uab, plugin, reference 
             totalBootLength_ += 5;
         }
-        foreach (var step in bootloader_.steps)
+        foreach (var step in VendorManager.Singleton.active.bootloaderConfig.schema.steps)
         {
             totalBootLength_ += step.length;
         }
@@ -175,7 +152,7 @@ public class ModuleManager
 
     public void Preload()
     {
-        UnityLogger.Singleton.Info("read to boot {0} steps", bootloader_.steps.Length);
+        UnityLogger.Singleton.Info("read to boot {0} steps", VendorManager.Singleton.active.bootloaderConfig.schema.steps.Length);
         executeNextBootStep();
     }
 
@@ -197,7 +174,7 @@ public class ModuleManager
     private IEnumerator loadConfigs()
     {
         var storage = new ModuleStorage();
-        foreach (var reference in DependencyConfig.Singleton.body.references)
+        foreach (var reference in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
         {
             UnityLogger.Singleton.Info("load config of {0}_{1}", reference.org, reference.module);
             yield return storage.LoadConfigFromVendor(reference.org, reference.module, reference.version);
@@ -218,7 +195,7 @@ public class ModuleManager
     private IEnumerator loadCatalogs()
     {
         var storage = new ModuleStorage();
-        foreach (var reference in DependencyConfig.Singleton.body.references)
+        foreach (var reference in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
         {
             UnityLogger.Singleton.Info("load catalog of {0}_{1}", reference.org, reference.module);
             yield return storage.LoadCatalogFromVendor(reference.org, reference.module, reference.version);
@@ -240,7 +217,7 @@ public class ModuleManager
     private IEnumerator loadAssetBundles()
     {
         var storage = new ModuleStorage();
-        foreach (var reference in DependencyConfig.Singleton.body.references)
+        foreach (var reference in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
         {
             UnityLogger.Singleton.Info("load uab of {0}_{1}", reference.org, reference.module);
             yield return storage.LoadUAB(reference.org, reference.module, reference.version);
@@ -262,7 +239,7 @@ public class ModuleManager
     private IEnumerator loadDependencies()
     {
         // 先加载plugin
-        foreach (var plugin in DependencyConfig.Singleton.body.plugins)
+        foreach (var plugin in VendorManager.Singleton.active.dependencyConfig.schema.body.plugins)
         {
             yield return loadPlugin(plugin.name, plugin.version);
             if (!success)
@@ -274,7 +251,7 @@ public class ModuleManager
         }
 
         // 再加载reference
-        foreach (var reference in DependencyConfig.Singleton.body.references)
+        foreach (var reference in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
         {
             yield return loadReference(reference.org, reference.module, reference.version);
             if (!success)
@@ -402,14 +379,14 @@ public class ModuleManager
 
     private void executeNextBootStep()
     {
-        if (currentBootStep_ >= bootloader_.steps.Length)
+        if (currentBootStep_ >= VendorManager.Singleton.active.bootloaderConfig.schema.steps.Length)
         {
             UnityLogger.Singleton.Info("All steps are finished");
             OnBootFinish();
             return;
         }
 
-        BootStep step = bootloader_.steps[currentBootStep_];
+        ConfigEntity.BootloaderConfig.BootStep step = VendorManager.Singleton.active.bootloaderConfig.schema.steps[currentBootStep_];
         string moduleFile = string.Format("{0}.FMP.MOD.{1}.LIB.Unity.dll", step.org, step.module);
         UnityLogger.Singleton.Info("Boot the step {0}_{1}", moduleFile, step.org, step.module);
         OnTipChanged("boot", string.Format("{0}_{1}", step.org, step.module));
@@ -441,7 +418,7 @@ public class ModuleManager
     private void handleBootStepFinish(string _module)
     {
         UnityLogger.Singleton.Info("Boot {0} finished", _module);
-        BootStep step = bootloader_.steps[currentBootStep_];
+        ConfigEntity.BootloaderConfig.BootStep step = VendorManager.Singleton.active.bootloaderConfig.schema.steps[currentBootStep_];
         finishedBootLength_ += step.length;
 
         updateProgress();

@@ -2,14 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Xml.Serialization;
-using XTC.FMP.LIB.MVCS;
 using UnityEngine.Networking;
 using System;
-using static Upgrade.Schema;
 using Newtonsoft.Json;
-using static UpgradeBehaviour;
 
-public class Upgrade
+public class FrameworkUpdate
 {
     public class Manifest
     {
@@ -21,44 +18,7 @@ public class Upgrade
         }
         public List<Entry> entries = new List<Entry>();
     }
-
-    public class Schema
-    {
-        public class Field
-        {
-            [XmlAttribute("attribute")]
-            public string attribute { get; set; } = "";
-
-            [XmlAttribute("values")]
-            public string values { get; set; } = "";
-        }
-
-
-        public class Update
-        {
-            [XmlAttribute("strategy")]
-            public string strategy { get; set; } = "skip";
-        }
-
-        public class Body
-        {
-            [XmlElement("Update")]
-            public Update update { get; set; } = new Update();
-        }
-
-        [XmlElement("Body")]
-        public Body body { get; set; } = new Body();
-
-        [XmlArray("Header"), XmlArrayItem("Field")]
-        public Field[] fields { get; set; } = new Field[] {
-            new Field
-            {
-                attribute = "Update.strategy",
-                values = "升级策略，可选值为：skip, auto, manual",
-            },
-        };
-    }
-
+   
     public class ManifestTask
     {
         public string url { get; set; }
@@ -105,16 +65,17 @@ public class Upgrade
     private List<FileTask> fileTasks_ = new List<FileTask>();
     private UnityWebRequest fileWebRequest_ = null;
 
-    public void ParseSchema(Schema _schema)
+    public void ParseSchema()
     {
+        var dependencyConfig = VendorManager.Singleton.active.dependencyConfig;
         fileTasks_.Clear();
-        foreach (var reference in DependencyConfig.Singleton.body.references)
+        foreach (var reference in dependencyConfig.schema.body.references)
         {
             string version = reference.version;
-            if (DependencyConfig.Singleton.body.options.environment.Equals("develop"))
+            if (dependencyConfig.schema.body.options.environment.Equals("develop"))
                 version = "develop";
 
-            string address = string.Format("{0}/modules/{1}/{2}@{3}", DependencyConfig.Singleton.body.options.repository, reference.org, reference.module, version);
+            string address = string.Format("{0}/modules/{1}/{2}@{3}", dependencyConfig.schema.body.options.repository, reference.org, reference.module, version);
 
             var manifestTask = new ManifestTask();
             manifestTask.url = string.Format("{0}/manifest.json", address);
@@ -156,13 +117,13 @@ public class Upgrade
             fileTasks_.Add(jsonTask);
         }
 
-        foreach (var plugin in DependencyConfig.Singleton.body.plugins)
+        foreach (var plugin in dependencyConfig.schema.body.plugins)
         {
             string version = plugin.version;
-            if (DependencyConfig.Singleton.body.options.environment.Equals("develop"))
+            if (dependencyConfig.schema.body.options.environment.Equals("develop"))
                 version = "develop";
 
-            string address = string.Format("{0}/plugins/{1}@{2}", DependencyConfig.Singleton.body.options.repository, plugin.name, version);
+            string address = string.Format("{0}/plugins/{1}@{2}", dependencyConfig.schema.body.options.repository, plugin.name, version);
 
             var manifestTask = new ManifestTask();
             manifestTask.url = string.Format("{0}/manifest.json", address);
@@ -175,7 +136,7 @@ public class Upgrade
         }
     }
 
-    public IEnumerator CheckDependencies(Schema _schema)
+    public IEnumerator CheckDependencies()
     {
         errorCode = ErrorCode.OK;
         updateTotalSize = 0;
@@ -262,13 +223,13 @@ public class Upgrade
         }
     }
 
-    public IEnumerator DownloadDependencies(Schema _schema)
+    public IEnumerator DownloadDependencies()
     {
         errorCode = ErrorCode.OK;
-        yield return downloadDependencies(_schema);
+        yield return downloadDependencies();
     }
 
-    public IEnumerator OverwriteDependencies(Schema _schema)
+    public IEnumerator OverwriteDependencies()
     {
         string vendorPath = Path.Combine(Storage.RootPath, Storage.VendorDir);
         yield return new UnityEngine.WaitForEndOfFrame();
@@ -301,7 +262,7 @@ public class Upgrade
         }
     }
 
-    private IEnumerator downloadDependencies(Schema _schema)
+    private IEnumerator downloadDependencies()
     {
         // 任何错误都不继续下载
         if (errorCode != ErrorCode.OK)
@@ -346,7 +307,7 @@ public class Upgrade
         fileWebRequest_.Dispose();
         fileWebRequest_ = null;
         task.finished = true;
-        yield return downloadDependencies(_schema);
+        yield return downloadDependencies();
     }
 
     private string getPlatformSuffix()

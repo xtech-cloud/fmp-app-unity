@@ -51,7 +51,7 @@ public class LauncherBehaviour : MonoBehaviour
         Storage.mode = Storage.Mode.Browser;
         BusinessBranch.Security.RewriteStorageAddress("http://minio.xtech.cloud");
         yield return VendorManager.Singleton.Activate(vendorUuid);
-        SceneManager.LoadScene("selector");
+        SceneManager.LoadScene("Selector");
     }
 
     IEnumerator launcherStandard()
@@ -75,6 +75,6 @@ public class LauncherBehaviour : MonoBehaviour
             yield return VendorManager.Singleton.Activate(AppConfig.Singleton.body.vendorSelector.active);
         }
 
-        SceneManager.LoadScene("selector");
+        SceneManager.LoadScene("Selector");
     }
 }
