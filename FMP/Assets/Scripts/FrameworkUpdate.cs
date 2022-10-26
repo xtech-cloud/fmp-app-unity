@@ -18,7 +18,7 @@ public class FrameworkUpdate
         }
         public List<Entry> entries = new List<Entry>();
     }
-   
+
     public class ManifestTask
     {
         public string url { get; set; }
@@ -67,15 +67,17 @@ public class FrameworkUpdate
 
     public void ParseSchema()
     {
+        string environment = VendorManager.Singleton.active.updateConfig.schema.body.frameworkUpdate.environment;
+        string repository = VendorManager.Singleton.active.updateConfig.schema.body.frameworkUpdate.repository;
         var dependencyConfig = VendorManager.Singleton.active.dependencyConfig;
         fileTasks_.Clear();
         foreach (var reference in dependencyConfig.schema.body.references)
         {
             string version = reference.version;
-            if (dependencyConfig.schema.body.options.environment.Equals("develop"))
+            if (environment.Equals("develop"))
                 version = "develop";
 
-            string address = string.Format("{0}/modules/{1}/{2}@{3}", dependencyConfig.schema.body.options.repository, reference.org, reference.module, version);
+            string address = string.Format("{0}/modules/{1}/{2}@{3}", repository, reference.org, reference.module, version);
 
             var manifestTask = new ManifestTask();
             manifestTask.url = string.Format("{0}/manifest.json", address);
@@ -120,10 +122,10 @@ public class FrameworkUpdate
         foreach (var plugin in dependencyConfig.schema.body.plugins)
         {
             string version = plugin.version;
-            if (dependencyConfig.schema.body.options.environment.Equals("develop"))
+            if (environment.Equals("develop"))
                 version = "develop";
 
-            string address = string.Format("{0}/plugins/{1}@{2}", dependencyConfig.schema.body.options.repository, plugin.name, version);
+            string address = string.Format("{0}/plugins/{1}@{2}", repository, plugin.name, version);
 
             var manifestTask = new ManifestTask();
             manifestTask.url = string.Format("{0}/manifest.json", address);
@@ -197,6 +199,7 @@ public class FrameworkUpdate
                     string hashFile = Path.Combine(Storage.UpgradeCachePath, file.saveAs) + ".hash";
                     if (File.Exists(hashFile))
                     {
+                        // 比对哈希值
                         if (File.ReadAllText(hashFile).Equals(file.hash))
                         {
                             file.finished = true;

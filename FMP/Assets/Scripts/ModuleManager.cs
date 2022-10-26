@@ -174,42 +174,72 @@ public class ModuleManager
     private IEnumerator loadConfigs()
     {
         var storage = new ModuleStorage();
-        foreach (var reference in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
+        if (VendorManager.Singleton.active.schema.ModuleCatalogS.Count != 0)
         {
-            UnityLogger.Singleton.Info("load config of {0}_{1}", reference.org, reference.module);
-            yield return storage.LoadConfigFromVendor(reference.org, reference.module, reference.version);
-            if (200 != storage.statusCode)
+            foreach (var pair in VendorManager.Singleton.active.schema.ModuleConfigS)
             {
-                UnityLogger.Singleton.Error(storage.error);
-                success = false;
-                yield break;
+                string value = Encoding.UTF8.GetString(Convert.FromBase64String(pair.Value));
+                UnityLogger.Singleton.Trace("load config of {0} success", pair.Key);
+                configs[string.Format("{0}.xml", pair.Key)] = value;
+                finishedBootLength_ += 1;
+                updateProgress();
+                OnTipChanged("config", pair.Key);
             }
-            UnityLogger.Singleton.Trace("load config of {0}_{1} success", reference.org, reference.module);
-            configs[string.Format("{0}_{1}.xml", reference.org, reference.module)] = storage.config;
-            finishedBootLength_ += 1;
-            updateProgress();
-            OnTipChanged("config", string.Format("{0}_{1}", reference.org, reference.module));
+        }
+        else
+        {
+            foreach (var reference in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
+            {
+                UnityLogger.Singleton.Info("load config of {0}_{1}", reference.org, reference.module);
+                yield return storage.LoadConfigFromVendor(reference.org, reference.module, reference.version);
+                if (200 != storage.statusCode)
+                {
+                    UnityLogger.Singleton.Error(storage.error);
+                    success = false;
+                    yield break;
+                }
+                UnityLogger.Singleton.Trace("load config of {0}_{1} success", reference.org, reference.module);
+                configs[string.Format("{0}_{1}.xml", reference.org, reference.module)] = storage.config;
+                finishedBootLength_ += 1;
+                updateProgress();
+                OnTipChanged("config", string.Format("{0}_{1}", reference.org, reference.module));
+            }
         }
     }
 
     private IEnumerator loadCatalogs()
     {
         var storage = new ModuleStorage();
-        foreach (var reference in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
+        if (VendorManager.Singleton.active.schema.ModuleCatalogS.Count != 0)
         {
-            UnityLogger.Singleton.Info("load catalog of {0}_{1}", reference.org, reference.module);
-            yield return storage.LoadCatalogFromVendor(reference.org, reference.module, reference.version);
-            if (200 != storage.statusCode)
+            foreach (var pair in VendorManager.Singleton.active.schema.ModuleCatalogS)
             {
-                UnityLogger.Singleton.Error(storage.error);
-                success = false;
-                yield break;
+                string value = Encoding.UTF8.GetString(Convert.FromBase64String(pair.Value));
+                UnityLogger.Singleton.Trace("load catalog of {0} success", pair.Key);
+                configs[string.Format("{0}.json", pair.Key)] = value;
+                finishedBootLength_ += 1;
+                updateProgress();
+                OnTipChanged("catalog", pair.Key);
             }
-            UnityLogger.Singleton.Trace("load catalog of {0}_{1} success", reference.org, reference.module);
-            configs[string.Format("{0}_{1}.json", reference.org, reference.module)] = storage.catalog;
-            finishedBootLength_ += 1;
-            updateProgress();
-            OnTipChanged("catalog", string.Format("{0}_{1}", reference.org, reference.module));
+        }
+        else
+        {
+            foreach (var reference in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
+            {
+                UnityLogger.Singleton.Info("load catalog of {0}_{1}", reference.org, reference.module);
+                yield return storage.LoadCatalogFromVendor(reference.org, reference.module, reference.version);
+                if (200 != storage.statusCode)
+                {
+                    UnityLogger.Singleton.Error(storage.error);
+                    success = false;
+                    yield break;
+                }
+                UnityLogger.Singleton.Trace("load catalog of {0}_{1} success", reference.org, reference.module);
+                configs[string.Format("{0}_{1}.json", reference.org, reference.module)] = storage.catalog;
+                finishedBootLength_ += 1;
+                updateProgress();
+                OnTipChanged("catalog", string.Format("{0}_{1}", reference.org, reference.module));
+            }
         }
     }
 

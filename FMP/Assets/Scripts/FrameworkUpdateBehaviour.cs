@@ -93,7 +93,7 @@ public class FrameworkUpdateBehaviour : MonoBehaviour
         ui.updateErrorPanel.btnSkip.onClick.AddListener(() =>
         {
             switchPanel(Panel.FAILURE);
-            enterStartup(3);
+            enterAssetSyndication(3);
         });
         ui.updateErrorPanel.btnRetry.onClick.AddListener(() =>
         {
@@ -106,7 +106,7 @@ public class FrameworkUpdateBehaviour : MonoBehaviour
         });
         ui.updateTipPanel.btnNo.onClick.AddListener(() =>
         {
-            enterStartup(0);
+            enterAssetSyndication(0);
         });
         ui.updatingPanel.sliderTotal.value = 0;
         ui.updatingPanel.sliderSingle.value = 0;
@@ -123,7 +123,7 @@ public class FrameworkUpdateBehaviour : MonoBehaviour
         // WASM 不支持程序集运行时加载，
         if (RuntimePlatform.WebGLPlayer == Constant.Platform)
         {
-            enterStartup(0);
+            enterAssetSyndication(0);
             yield break;
         }
 
@@ -133,7 +133,7 @@ public class FrameworkUpdateBehaviour : MonoBehaviour
         if (updateStrategy_.Equals("skip"))
         {
             UnityLogger.Singleton.Warning("skip frameworkupdate");
-            enterStartup(0);
+            enterAssetSyndication(0);
             yield break;
         }
 
@@ -153,15 +153,15 @@ public class FrameworkUpdateBehaviour : MonoBehaviour
         ui.updatingPanel.sliderTotal.value = frameworkUpdate_.updateEntryProgress;
     }
 
-    private void enterStartup(float _delay)
+    private void enterAssetSyndication(float _delay)
     {
-        StartCoroutine(delayEnterStartup(_delay));
+        StartCoroutine(delayEnterAssetSyndication(_delay));
     }
 
-    private IEnumerator delayEnterStartup(float _delay)
+    private IEnumerator delayEnterAssetSyndication(float _delay)
     {
         yield return new WaitForSeconds(_delay);
-        SceneManager.LoadScene("Startup");
+        SceneManager.LoadScene("AssetSyndication");
     }
 
     private IEnumerator updateDependencies()
@@ -182,7 +182,7 @@ public class FrameworkUpdateBehaviour : MonoBehaviour
             {
                 switchPanel(Panel.FAILURE);
                 // 非手动模式进入startup场景
-                enterStartup(3);
+                enterAssetSyndication(3);
             }
             yield break;
         }
@@ -194,7 +194,7 @@ public class FrameworkUpdateBehaviour : MonoBehaviour
             UnityLogger.Singleton.Info("ready to download dependencies, totalSize is {0}, finishedSize is {1}", frameworkUpdate_.updateTotalSize, frameworkUpdate_.updateFinishedSize);
             if (frameworkUpdate_.updateFinishedSize >= frameworkUpdate_.updateTotalSize)
             {
-                enterStartup(0);
+                enterAssetSyndication(0);
                 yield break;
             }
             // 手动模式弹出更新提示
@@ -213,7 +213,7 @@ public class FrameworkUpdateBehaviour : MonoBehaviour
         // 没有数据需要更新
         if (frameworkUpdate_.updateFinishedSize >= frameworkUpdate_.updateTotalSize)
         {
-            enterStartup(0);
+            enterAssetSyndication(0);
             yield break;
         }
 
@@ -233,7 +233,7 @@ public class FrameworkUpdateBehaviour : MonoBehaviour
             {
                 switchPanel(Panel.FAILURE);
                 // 非手动模式进入startup场景
-                enterStartup(3);
+                enterAssetSyndication(3);
             }
             yield break;
         }
@@ -250,7 +250,7 @@ public class FrameworkUpdateBehaviour : MonoBehaviour
             yield break;
         }
         UnityLogger.Singleton.Info("all dependencies overwrite success");
-        enterStartup(1);
+        enterAssetSyndication(1);
     }
 
     private string formatSize(ulong _size)

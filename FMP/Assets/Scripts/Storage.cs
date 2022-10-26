@@ -334,13 +334,15 @@ public class ModuleStorage : Storage
         error = "";
         uab = null;
 
+        string environment = VendorManager.Singleton.active.updateConfig.schema.body.frameworkUpdate.environment;
+        string repository = VendorManager.Singleton.active.updateConfig.schema.body.frameworkUpdate.repository;
         string file = "";
         if (Storage.Mode.Browser == Storage.mode)
         {
             string version = _version;
-            if (VendorManager.Singleton.active.dependencyConfig.schema.body.options.environment.Equals("develop"))
+            if (environment.Equals("develop"))
                 version = "develop";
-            string address = VendorManager.Singleton.active.dependencyConfig.schema.body.options.repository;
+            string address = repository;
             address = Path.Combine(address, "modules");
             address = Path.Combine(address, _org);
             address = Path.Combine(address, string.Format("{0}@{1}", _module, version));
@@ -416,10 +418,12 @@ public class ModuleStorage : Storage
 
     private IEnumerator loadPluginFromWeb(string _name, string _file, string _version)
     {
+        string environment = VendorManager.Singleton.active.updateConfig.schema.body.frameworkUpdate.environment;
+        string repository = VendorManager.Singleton.active.updateConfig.schema.body.frameworkUpdate.repository;
         string version = _version;
-        if (VendorManager.Singleton.active.dependencyConfig.schema.body.options.environment.Equals("develop"))
+        if (environment.Equals("develop"))
             version = "develop";
-        string address = VendorManager.Singleton.active.dependencyConfig.schema.body.options.repository;
+        string address = repository;
         address = Path.Combine(address, "plugins");
         address = Path.Combine(address, string.Format("{0}@{1}", _name, version));
         string file = Path.Combine(address, _file).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
@@ -459,10 +463,12 @@ public class ModuleStorage : Storage
 
     private IEnumerator loadReferenceFromWeb(string _org, string _module, string _file, string _version)
     {
+        string environment = VendorManager.Singleton.active.updateConfig.schema.body.frameworkUpdate.environment;
+        string repository = VendorManager.Singleton.active.updateConfig.schema.body.frameworkUpdate.repository;
         string version = _version;
-        if (VendorManager.Singleton.active.dependencyConfig.schema.body.options.environment.Equals("develop"))
+        if (environment.Equals("develop"))
             version = "develop";
-        string address = VendorManager.Singleton.active.dependencyConfig.schema.body.options.repository;
+        string address = repository;
         address = Path.Combine(address, "modules");
         address = Path.Combine(address, _org);
         address = Path.Combine(address, string.Format("{0}@{1}", _module, version));

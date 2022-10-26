@@ -20,15 +20,6 @@ namespace ConfigEntity
             public string values { get; set; } = "";
         }
 
-
-        public class Options
-        {
-            [XmlAttribute("environment")]
-            public string environment { get; set; } = "develop";
-            [XmlAttribute("repository")]
-            public string repository { get; set; } = "";
-        }
-
         public class Reference
         {
             [XmlAttribute("org")]
@@ -49,8 +40,6 @@ namespace ConfigEntity
 
         public class Body
         {
-            [XmlElement("Options")]
-            public Options options = new Options();
             [XmlArray("References"), XmlArrayItem("Reference")]
             public Reference[] references { get; set; } = new Reference[0];
             [XmlArray("Plugins"), XmlArrayItem("Plugin")]
@@ -114,12 +103,18 @@ namespace ConfigEntity
             {
                 [XmlAttribute("strategy")]
                 public string strategy { get; set; } = "skip";
+                [XmlAttribute("environment")]
+                public string environment { get; set; } = "develop";
+                [XmlAttribute("repository")]
+                public string repository { get; set; } = "";
             }
 
             public class AssetSyndication
             {
                 [XmlAttribute("strategy")]
                 public string strategy { get; set; } = "skip";
+                [XmlAttribute("storage")]
+                public string storage { get; set; } = "";
             }
 
             public class Body
@@ -144,6 +139,22 @@ namespace ConfigEntity
 
         [XmlElement("Schema")]
         public Schema schema { get; set; } = new Schema();
+    }
+
+    public class CatalogConfig
+    {
+        public class Section
+        {
+            /// <summary>
+            /// 内容列表
+            /// </summary>
+            /// <remarks>
+            /// 支持正则表达式
+            /// </remarks>
+            public string[] contentS { get; set; } = new string[0];
+        }
+
+        public Section[] sectionS { get; set; } = new Section[0];
     }
 
     public class VendorSchema
@@ -200,6 +211,7 @@ public class Vendor
     public ConfigEntity.BootloaderConfig bootloaderConfig { get; private set; }
     public ConfigEntity.DependencyConfig dependencyConfig { get; private set; }
     public ConfigEntity.UpdateConfig updateConfig { get; private set; }
+    Dictionary<string, string> moduleCatalogS = new Dictionary<string, string>();
 
     private T parseXML<T>(string _base64) where T : class, new()
     {
