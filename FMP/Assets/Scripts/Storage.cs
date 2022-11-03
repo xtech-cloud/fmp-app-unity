@@ -106,6 +106,13 @@ public class Storage
         yield return readBytes(file);
     }
 
+    public void WriteBytesToVendor(string _file, byte[] _data)
+    {
+        string vendorPath = Path.Combine(RootPath, VendorDir);
+        string file = Path.Combine(vendorPath, _file);
+        File.WriteAllBytes(file, _data);
+    }
+
     /// <summary>
     /// 从存储根节点读取数据
     /// </summary>

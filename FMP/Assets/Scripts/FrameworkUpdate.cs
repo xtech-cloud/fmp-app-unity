@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using System.Collections;
 using System.Collections.Generic;
-using System.Xml.Serialization;
 using UnityEngine.Networking;
 using System;
 using Newtonsoft.Json;
@@ -70,6 +69,7 @@ public class FrameworkUpdate
         string environment = VendorManager.Singleton.active.updateConfig.schema.body.frameworkUpdate.environment;
         string repository = VendorManager.Singleton.active.updateConfig.schema.body.frameworkUpdate.repository;
         var dependencyConfig = VendorManager.Singleton.active.dependencyConfig;
+        var themeS = VendorManager.Singleton.active.schema.ModuleThemeS;
         fileTasks_.Clear();
         foreach (var reference in dependencyConfig.schema.body.references)
         {
@@ -136,6 +136,19 @@ public class FrameworkUpdate
             dllTask.saveAs = string.Format("modules/{0}.dll", plugin.name);
             fileTasks_.Add(dllTask);
         }
+
+        foreach (var pair in themeS)
+        {
+            foreach (var file in pair.Value.entityS)
+            {
+                var themeTask = new FileTask();
+                themeTask.url = file.url;
+                themeTask.hash = file.hash;
+                themeTask.size = file.size;
+                themeTask.saveAs = string.Format("themes/{0}/{1}", pair.Key, file.path);
+                fileTasks_.Add(themeTask);
+            }
+        }
     }
 
     public IEnumerator CheckDependencies()
@@ -195,16 +208,21 @@ public class FrameworkUpdate
                         continue;
                     file.size = entry.size;
                     file.hash = entry.hash;
-                    // 如果文件已经下载
-                    string hashFile = Path.Combine(Storage.UpgradeCachePath, file.saveAs) + ".hash";
-                    if (File.Exists(hashFile))
-                    {
-                        // 比对哈希值
-                        if (File.ReadAllText(hashFile).Equals(file.hash))
-                        {
-                            file.finished = true;
-                        }
-                    }
+                }
+            }
+        }
+
+        // 比对已下载的哈希值记录
+        foreach (var file in fileTasks_)
+        { 
+            // 如果文件已经下载
+            string hashFile = Path.Combine(Storage.UpgradeCachePath, file.saveAs) + ".hash";
+            if (File.Exists(hashFile))
+            {
+                // 比对哈希值
+                if (File.ReadAllText(hashFile).Equals(file.hash))
+                {
+                    file.finished = true;
                 }
             }
         }
@@ -236,14 +254,6 @@ public class FrameworkUpdate
     {
         string vendorPath = Path.Combine(Storage.RootPath, Storage.VendorDir);
         yield return new UnityEngine.WaitForEndOfFrame();
-        if (!Directory.Exists(Path.Combine(vendorPath, "modules")))
-            Directory.CreateDirectory(Path.Combine(vendorPath, "modules"));
-        if (!Directory.Exists(Path.Combine(vendorPath, "configs")))
-            Directory.CreateDirectory(Path.Combine(vendorPath, "configs"));
-        if (!Directory.Exists(Path.Combine(vendorPath, "catalogs")))
-            Directory.CreateDirectory(Path.Combine(vendorPath, "catalogs"));
-        if (!Directory.Exists(Path.Combine(vendorPath, "uabs")))
-            Directory.CreateDirectory(Path.Combine(vendorPath, "uabs"));
 
         foreach (var task in fileTasks_)
         {
@@ -252,6 +262,9 @@ public class FrameworkUpdate
             UnityLogger.Singleton.Info("Overwrite {0}", task.saveAs);
             try
             {
+                string dir = Path.GetDirectoryName(task.saveAs);
+                if (!Directory.Exists(Path.Combine(vendorPath, dir)))
+                    Directory.CreateDirectory(Path.Combine(vendorPath, dir));
 
                 File.Copy(Path.Combine(Storage.UpgradeCachePath, task.saveAs), Path.Combine(vendorPath, task.saveAs), true);
                 File.Delete(Path.Combine(Storage.UpgradeCachePath, task.saveAs));

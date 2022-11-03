@@ -9,6 +9,20 @@ using Unity.VisualScripting;
 
 namespace ConfigEntity
 {
+    public class FileSubEntity
+    {
+        public string path { get; set; }
+        public string hash { get; set; }
+        public ulong size { get; set; }
+        public string url { get; set; }
+
+    }
+
+    public class FileSubEntityS
+    {
+        public FileSubEntity[] entityS { get; set; } = new FileSubEntity[0];
+    }
+
     public class DependencyConfig
     {
         public class Field
@@ -176,6 +190,7 @@ namespace ConfigEntity
         public string UpdateConfig { get; set; } = "";
         public Dictionary<string, string> ModuleConfigS = new Dictionary<string, string>();
         public Dictionary<string, string> ModuleCatalogS = new Dictionary<string, string>();
+        public Dictionary<string, FileSubEntityS> ModuleThemeS = new Dictionary<string, FileSubEntityS>();
     }
 }
 
@@ -211,7 +226,6 @@ public class Vendor
     public ConfigEntity.BootloaderConfig bootloaderConfig { get; private set; }
     public ConfigEntity.DependencyConfig dependencyConfig { get; private set; }
     public ConfigEntity.UpdateConfig updateConfig { get; private set; }
-    Dictionary<string, string> moduleCatalogS = new Dictionary<string, string>();
 
     private T parseXML<T>(string _base64) where T : class, new()
     {

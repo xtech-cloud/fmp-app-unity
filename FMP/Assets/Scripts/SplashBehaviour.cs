@@ -283,5 +283,8 @@ public class SplashBehaviour : MonoBehaviour
         }
     }
 
+    private void downloadVendorMeta()
+    {
 
+    }
 }
