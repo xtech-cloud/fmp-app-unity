@@ -42,16 +42,9 @@ public class SelectorBehaviour : MonoBehaviour
                 UnityLogger.Singleton.Error(storage.error);
                 continue;
             }
-            Vendor vendor = null;
-            try
-            {
-                vendor = JsonConvert.DeserializeObject<Vendor>(System.Text.Encoding.UTF8.GetString(storage.bytes));
-            }
-            catch (System.Exception ex)
-            {
-                UnityLogger.Singleton.Exception(ex);
+            var vendor = Vendor.Parse(storage.bytes);
+            if (null == vendor)
                 continue;
-            }
             var clone = GameObject.Instantiate(templateVendor, templateVendor.transform.parent);
             clone.name = vendor.schema.Name;
             clone.transform.Find("text").GetComponent<Text>().text = vendor.schema.Display;
