@@ -147,7 +147,7 @@ public class AssetSyndicationBehaviour : MonoBehaviour
         ui.updatingPanel.textFinishSize.text = formatSize(assetSyndication.updateFinishedSize);
         ui.updatingPanel.textTotalSize.text = formatSize(assetSyndication.updateTotalSize);
         ui.updatingPanel.sliderTotal.value = assetSyndication.updateTotalSize > 0 ? (assetSyndication.updateFinishedSize * 100 / assetSyndication.updateTotalSize) / 100f : 0;
-        ui.updatingPanel.sliderTotal.value = assetSyndication.updateEntryProgress;
+        ui.updatingPanel.sliderSingle.value = assetSyndication.updateEntryProgress;
     }
 
     private void enterStartup(float _delay)

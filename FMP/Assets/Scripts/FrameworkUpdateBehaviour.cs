@@ -150,7 +150,7 @@ public class FrameworkUpdateBehaviour : MonoBehaviour
         ui.updatingPanel.textFinishSize.text = formatSize(frameworkUpdate_.updateFinishedSize);
         ui.updatingPanel.textTotalSize.text = formatSize(frameworkUpdate_.updateTotalSize);
         ui.updatingPanel.sliderTotal.value = frameworkUpdate_.updateTotalSize > 0 ? (frameworkUpdate_.updateFinishedSize * 100 / frameworkUpdate_.updateTotalSize) / 100f : 0;
-        ui.updatingPanel.sliderTotal.value = frameworkUpdate_.updateEntryProgress;
+        ui.updatingPanel.sliderSingle.value = frameworkUpdate_.updateEntryProgress;
     }
 
     private void enterAssetSyndication(float _delay)
