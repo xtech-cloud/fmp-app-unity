@@ -21,6 +21,7 @@ public class StartupBehaviour : MonoBehaviour
     }
 
     public Transform mainCanvas;
+    public Transform mainWorld;
     public GameObject bootloader;
     public Text textBootloaderTip;
     public Text textBootloaderUpgress;
@@ -87,6 +88,7 @@ public class StartupBehaviour : MonoBehaviour
         settings["devicecode"] = MVCS.Any.FromString(Constant.DeviceCode);
         settings["platform"] = MVCS.Any.FromString(Constant.PlatformAlias);
         settings["canvas.main"] = MVCS.Any.FromObject(mainCanvas);
+        settings["world.main"] = MVCS.Any.FromObject(mainWorld);
         settings["font.main"] = MVCS.Any.FromObject(mainFont);
         foreach (var pair in moduleManager.uabs)
         {
