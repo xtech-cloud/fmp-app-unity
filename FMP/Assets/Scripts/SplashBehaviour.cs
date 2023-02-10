@@ -51,7 +51,7 @@ public class SplashBehaviour : MonoBehaviour
         UnityLogger.Singleton.Info("########### Enter Splash Scene");
         activeVendor_ = VendorManager.Singleton.active;
 
-        txtVersion.text = "ver " + Application.version;
+        txtVersion.text = "ver " + Application.version + "." + BusinessBranch.Build.version;
 
         uiTip_ = JsonUtility.FromJson<UiTip>(tip.text);
         verifyCodeMap["verify_code_1"] = uiTip_.verify_code_1;

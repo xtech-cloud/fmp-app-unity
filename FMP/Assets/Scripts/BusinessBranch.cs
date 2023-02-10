@@ -2,10 +2,16 @@
 
 namespace BusinessBranch
 {
+    public static class Build
+    {
+        public static string version { get; private set; } = "0";
+    }
+
     public static class Security
     {
         public static string AppKey { get; private set; } = "";
         public static string AppSecret { get; private set; } = "";
+
 
         public static string StorageAddress { get; private set; } = "http://localhost:9000";
         public static string StorageVendorRootDir { get; private set; } = "fmp.vendor/unity";
