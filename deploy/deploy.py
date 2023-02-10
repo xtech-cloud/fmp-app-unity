@@ -133,9 +133,9 @@ def build(_company, _product, _buildParameter, _bits, _output):
     # 创建中间文件夹
     os.mkdir(tmp_dir)
     os.mkdir(package_dir)
-    # 删除Unity/Plugins文件夹
-    if os.path.exists("../FMP/Assets/Plugins"):
-        shutil.rmtree("../FMP/Assets/Plugins")
+    # 删除Unity/_3rd文件夹
+    if os.path.exists("../FMP/Assets/_3rd"):
+        shutil.rmtree("../FMP/Assets/_3rd")
     # 备份原始数据
     backup()
     printGreen("backup SUCCESS")
@@ -170,10 +170,10 @@ def build(_company, _product, _buildParameter, _bits, _output):
             "{}/{}/Packages/manifest.json".format(branch_dir, _product),
             "../FMP/Packages/manifest.json",
         )
-    if os.path.exists("{}/{}/Plugins".format(branch_dir, _product)):
+    if os.path.exists("{}/{}/_3rd".format(branch_dir, _product)):
         shutil.copytree(
-            "{}/{}/Plugins".format(branch_dir, _product),
-            "../FMP/Assets/Plugins",
+            "{}/{}/_3rd".format(branch_dir, _product),
+            "../FMP/Assets/_3rd",
         )
     printGreen("overwrite SUCCESS")
     printYellow("build ... ")
@@ -187,25 +187,11 @@ def build(_company, _product, _buildParameter, _bits, _output):
 
     # 还原原始数据
     restore()
-    if os.path.exists("../FMP/Assets/Plugins"):
-        shutil.rmtree("../FMP/Assets/Plugins")
+    if os.path.exists("../FMP/Assets/_3rd"):
+        shutil.rmtree("../FMP/Assets/_3rd")
     printGreen("restore SUCCESS")
 
     # 打包
-    try:
-        pluginsExt = os.path.abspath("{}/{}/PluginsExt".format(branch_dir, _product))
-        if os.path.exists(pluginsExt):
-            for subdir in os.listdir(pluginsExt):
-                shutil.copytree(
-                    "{}/{}/PluginsExt/{}".format(branch_dir, _product, subdir),
-                    "./_package/{}/application/{}_Data/Plugins/{}".format(
-                        _product, _product, subdir
-                    ),
-                )
-    except Exception as e:
-        printRed(e)
-        clean()
-        sys.exit(1)
     os.system(
         "{}/7z/7z.exe a {}\_output\{}_v{}.zip .\_package\*".format(
             current_dir, current_dir, _output, version
