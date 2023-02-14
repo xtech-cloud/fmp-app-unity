@@ -116,6 +116,16 @@ public class AssetSyndication
             if (manifestTask.finished)
                 continue;
 
+            //不下载忽略包
+            string uuid = Path.GetFileName(Path.GetDirectoryName(manifestTask.url));
+            string ignoreFile = Path.Combine(Storage.SyndicationCachePath, uuid + ".ignore");
+            if (File.Exists(ignoreFile))
+            {
+                UnityLogger.Singleton.Warning("bundle {0} is ignored", uuid);
+                manifestTask.finished = true;
+                continue;
+            }
+
             // 下载清单文件
             UnityLogger.Singleton.Debug("pull {0}", manifestTask.url);
             using (UnityWebRequest uwr = UnityWebRequest.Get(new Uri(manifestTask.url)))
