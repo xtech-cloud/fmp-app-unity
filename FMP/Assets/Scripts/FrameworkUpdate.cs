@@ -216,7 +216,7 @@ public class FrameworkUpdate
         foreach (var file in fileTasks_)
         { 
             // 如果文件已经下载
-            string hashFile = Path.Combine(Storage.UpgradeCachePath, file.saveAs) + ".hash";
+            string hashFile = Path.Combine(Storage.UpdateCachePath, file.saveAs) + ".hash";
             if (File.Exists(hashFile))
             {
                 // 比对哈希值
@@ -257,7 +257,7 @@ public class FrameworkUpdate
 
         foreach (var task in fileTasks_)
         {
-            if (!File.Exists(Path.Combine(Storage.UpgradeCachePath, task.saveAs)))
+            if (!File.Exists(Path.Combine(Storage.UpdateCachePath, task.saveAs)))
                 continue;
             UnityLogger.Singleton.Info("Overwrite {0}", task.saveAs);
             try
@@ -266,8 +266,8 @@ public class FrameworkUpdate
                 if (!Directory.Exists(Path.Combine(vendorPath, dir)))
                     Directory.CreateDirectory(Path.Combine(vendorPath, dir));
 
-                File.Copy(Path.Combine(Storage.UpgradeCachePath, task.saveAs), Path.Combine(vendorPath, task.saveAs), true);
-                File.Delete(Path.Combine(Storage.UpgradeCachePath, task.saveAs));
+                File.Copy(Path.Combine(Storage.UpdateCachePath, task.saveAs), Path.Combine(vendorPath, task.saveAs), true);
+                File.Delete(Path.Combine(Storage.UpdateCachePath, task.saveAs));
             }
             catch (Exception ex)
             {
@@ -303,7 +303,7 @@ public class FrameworkUpdate
         fileWebRequest_ = UnityWebRequest.Get(new Uri(task.url));
         // 下载到缓存目录中
         UnityLogger.Singleton.Trace("download {0}", task.saveAs);
-        string saveAsPath = Path.Combine(Storage.UpgradeCachePath, task.saveAs);
+        string saveAsPath = Path.Combine(Storage.UpdateCachePath, task.saveAs);
         fileWebRequest_.downloadHandler = new DownloadHandlerFile(saveAsPath);
         yield return fileWebRequest_.SendWebRequest();
         if (fileWebRequest_.result != UnityWebRequest.Result.Success)

@@ -80,12 +80,21 @@ public class Storage
         }
     }
 
-    public static string UpgradeCachePath
+    public static string UpdateCachePath
     {
         get
         {
             string path = Path.Combine(RootPath, VendorDir);
-            return Path.Combine(path, ".upgrade");
+            return Path.Combine(path, ".update");
+        }
+    }
+
+    public static string SyndicationCachePath
+    {
+        get
+        {
+            string path = Path.Combine(RootPath, VendorDir);
+            return Path.Combine(path, ".syndication");
         }
     }
 
