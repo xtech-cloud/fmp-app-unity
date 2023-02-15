@@ -32,10 +32,9 @@ public class SplashBehaviour : MonoBehaviour
     public Image imgBackground;
     public Image imgSlogan;
     public TextAsset tip;
-    public Text txtDeviceCode;
     public Text txtError;
     public Text txtVersion;
-    public RawImage imgQRCode;
+    public Transform sn;
 
     private UiTip uiTip_;
     private Dictionary<string, string> verifyCodeMap = new Dictionary<string, string>();
@@ -64,28 +63,7 @@ public class SplashBehaviour : MonoBehaviour
         verifyCodeMap["verify_code_8"] = uiTip_.verify_code_8;
         verifyCodeMap["verify_code_14"] = uiTip_.verify_code_14;
 
-        txtDeviceCode.GetComponent<Button>().onClick.AddListener(() =>
-        {
-            if (quitClikCount_ > 15)
-            {
-                txtDeviceCode.gameObject.SetActive(false);
-                return;
-            }
-            quitClikCount_ += 1;
-            quitClikTimer_ = Time.timeSinceLevelLoad;
-        });
-        imgQRCode.GetComponent<Button>().onClick.AddListener(() =>
-        {
-            if (quitClikCount_ < 15)
-                return;
-            quitClikCount_ += 1;
-            quitClikTimer_ = Time.timeSinceLevelLoad;
-            if (quitClikCount_ > 30)
-            {
-                Debug.Log("QUIT");
-                Application.Quit();
-            }
-        });
+        sn.gameObject.SetActive(false);
     }
 
     IEnumerator Start()
@@ -163,7 +141,6 @@ public class SplashBehaviour : MonoBehaviour
 
     private void applyDeviceCode(string _code)
     {
-        txtDeviceCode.text = _code;
         Texture2D texture = new Texture2D(256, 256);
         var writer = new BarcodeWriter
         {
@@ -177,9 +154,48 @@ public class SplashBehaviour : MonoBehaviour
         Color32[] color32 = writer.Write(_code);
         texture.SetPixels32(color32);
         texture.Apply();
-        imgQRCode.texture = texture;
 
         //File.WriteAllText(Path.Combine(Constant.DataPath, "sn.out"), _code);
+
+        UnityEngine.Events.UnityAction onTextCodeClick = () =>
+        {
+            if (quitClikCount_ > 15)
+            {
+                foreach (Transform child in sn.parent.transform)
+                {
+                    child.Find("txtCode").gameObject.SetActive(false);
+                }
+                return;
+            }
+            quitClikCount_ += 1;
+            quitClikTimer_ = Time.timeSinceLevelLoad;
+        };
+
+        UnityEngine.Events.UnityAction onImageCodeClick = () =>
+        {
+            if (quitClikCount_ < 15)
+                return;
+            quitClikCount_ += 1;
+            quitClikTimer_ = Time.timeSinceLevelLoad;
+            if (quitClikCount_ > 30)
+            {
+                Debug.Log("QUIT");
+                Application.Quit();
+            }
+        };
+
+        int multiScreenColumn = null == activeVendor_ ? 1 : activeVendor_.schema.MultiScreenColumn;
+        for (int i = 0; i < multiScreenColumn; ++i)
+        {
+            var clone = GameObject.Instantiate(sn, sn.parent);
+            clone.gameObject.SetActive(true);
+            var txtCode = clone.Find("txtCode");
+            txtCode.GetComponent<Text>().text = _code;
+            txtCode.GetComponent<Button>().onClick.AddListener(onTextCodeClick);
+            var imgQRCode = clone.Find("imgQRCode");
+            imgQRCode.GetComponent<RawImage>().texture = texture;
+            imgQRCode.GetComponent<Button>().onClick.AddListener(onImageCodeClick);
+        }
     }
 
     private bool verifyLicense(byte[] _bytes, string _deviceCode, out int _verifyCode, out int _expiry, out long _timestamp)
@@ -281,10 +297,5 @@ public class SplashBehaviour : MonoBehaviour
         {
             imgSlogan.sprite = storage.sprite;
         }
-    }
-
-    private void downloadVendorMeta()
-    {
-
     }
 }

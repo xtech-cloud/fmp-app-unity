@@ -176,6 +176,8 @@ namespace ConfigEntity
         public string Uuid { get; set; } = "";
         public string Name { get; set; } = "";
         public string Display { get; set; } = "";
+        public int MultiScreenRow { get; set; } = 1;
+        public int MultiScreenColumn { get; set; } = 1;
         public string SkinSplashBackground { get; set; } = "";
         public string SkinSplashSlogan { get; set; } = "";
         public int GraphicsFPS { get; set; }
