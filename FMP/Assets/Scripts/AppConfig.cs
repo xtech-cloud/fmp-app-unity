@@ -30,9 +30,10 @@ public class AppConfig
 
     public class Security
     {
-        [XmlAttribute("sngen")]
-        public int sngen { get; set; } = 1; // 0：使用自有算法生成sn, 1：使用Unity的算法
-
+        [XmlAttribute("dcgen")]
+        public int dcgen { get; set; } = 1; // 0：使用自有算法生成设备码, 1：使用Unity的算法
+        [XmlAttribute("serialnumber")]
+        public string serialnumber { get; set; } = ""; // 序列号，默认为设备码
     }
 
     public class Body

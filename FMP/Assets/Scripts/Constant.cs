@@ -41,7 +41,7 @@ public class Constant
     {
         get
         {
-            if (0 == AppConfig.Singleton.body.security.sngen)
+            if (0 == AppConfig.Singleton.body.security.dcgen)
                 return SystemInfo.deviceUniqueIdentifier;
 
             if (string.IsNullOrEmpty(devicecode_))
