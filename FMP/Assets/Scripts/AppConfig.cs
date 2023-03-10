@@ -28,10 +28,21 @@ public class AppConfig
         public int level { get; set; } = 4; //info
     }
 
+    public class Security
+    {
+        [XmlAttribute("dcgen")]
+        public int dcgen { get; set; } = 1; // 0：使用自有算法生成设备码, 1：使用Unity的算法
+        [XmlAttribute("serialnumber")]
+        public string serialnumber { get; set; } = ""; // 序列号，默认为设备码
+    }
+
     public class Body
     {
         [XmlElement("Logger")]
         public Logger logger { get; set; } = new Logger();
+
+        [XmlElement("Security")]
+        public Security security = new Security();
 
         [XmlElement("VendorSelector")]
         public VendorSelector vendorSelector = new VendorSelector();
@@ -54,7 +65,7 @@ public class AppConfig
             {
                 attribute = "Vendor.Selector.active",
                 values = "激活的虚拟环境的目录，如果没有激活的虚拟环境，会显示虚拟环境选择界面",
-            } 
+            }
         };
     }
 

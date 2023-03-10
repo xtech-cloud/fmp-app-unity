@@ -8,10 +8,10 @@ public class Constant
     {
         get
         {
-            if (RuntimePlatform.WindowsPlayer == Platform||
+            if (RuntimePlatform.WindowsPlayer == Platform ||
                 RuntimePlatform.WindowsEditor == Platform)
                 return "windows";
-            if (RuntimePlatform.LinuxPlayer == Platform||
+            if (RuntimePlatform.LinuxPlayer == Platform ||
                 RuntimePlatform.LinuxEditor == Platform)
                 return "linux";
             if (RuntimePlatform.OSXPlayer == Platform ||
@@ -41,21 +41,31 @@ public class Constant
     {
         get
         {
+            if (0 == AppConfig.Singleton.body.security.dcgen)
+                return SystemInfo.deviceUniqueIdentifier;
+
             if (string.IsNullOrEmpty(devicecode_))
             {
+                StringBuilder sb = new StringBuilder();
+                
+                sb.AppendLine(Application.companyName)
+                    .AppendLine(Application.productName)
+                    .AppendLine(Application.platform.ToString())
+                    .AppendLine(SystemInfo.deviceModel)
+                    .AppendLine(SystemInfo.deviceName)
+                    .AppendLine(SystemInfo.deviceType.ToString())
+                    .AppendLine(SystemInfo.graphicsDeviceID.ToString())
+                    .AppendLine(SystemInfo.graphicsDeviceName)
+                    .AppendLine(SystemInfo.graphicsDeviceType.ToString())
+                    .AppendLine(SystemInfo.graphicsDeviceVendor)
+                    .AppendLine(SystemInfo.graphicsDeviceVendorID.ToString())
+                    .AppendLine(SystemInfo.graphicsDeviceVersion)
+                    .AppendLine(SystemInfo.processorCount.ToString())
+                    .AppendLine(SystemInfo.processorType);
 
-                StringBuilder sb = new System.Text.StringBuilder();
-                sb.Append(SystemInfo.deviceModel + "\n")
-                    .Append(SystemInfo.deviceName + "\n")
-                    .Append(SystemInfo.deviceType + "\n")
-                    .Append(SystemInfo.graphicsDeviceID + "\n")
-                    .Append(SystemInfo.graphicsDeviceName + "\n")
-                    .Append(SystemInfo.graphicsDeviceType + "\n")
-                    .Append(SystemInfo.graphicsDeviceVendor + "\n")
-                    .Append(SystemInfo.graphicsDeviceVendorID + "\n")
-                    .Append(SystemInfo.graphicsDeviceVersion + "\n")
-                    .Append(SystemInfo.processorCount + "\n")
-                    .Append(SystemInfo.processorType + "\n");
+                UnityLogger.Singleton.Info("********* device info  ************");
+                UnityLogger.Singleton.Info(sb.ToString());
+                UnityLogger.Singleton.Info("**********************************");
 
                 UnityLogger.Singleton.Info(sb.ToString());
                 MD5CryptoServiceProvider md5Hasher = new MD5CryptoServiceProvider();
@@ -66,7 +76,16 @@ public class Constant
                     tmp.Append(i.ToString("x2"));
                 }
                 devicecode_ = tmp.ToString().ToUpper();
-                //return SystemInfo.deviceUniqueIdentifier;
+
+                // ! 不采用的方法
+                // System.Management 只能在Windows Desktop Application中使用;
+
+                // !! 不采用的方法
+                // 直接调用WMI, 部分Win10和Win11升级更新后，找不到WMI
+
+                // !! 已弃用的方法
+                // 系统更新或激活网卡变化后，设备码会变化
+                // devicecode_ = SystemInfo.deviceUniqueIdentifier;
             }
             return devicecode_;
         }
