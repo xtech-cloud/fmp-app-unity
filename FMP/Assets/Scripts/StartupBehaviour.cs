@@ -83,7 +83,7 @@ public class StartupBehaviour : MonoBehaviour
 
         // 加载模块
         string serialnumber = string.IsNullOrEmpty(AppConfig.Singleton.body.security.serialnumber) ? Constant.DeviceCode : AppConfig.Singleton.body.security.serialnumber;
-        UnityLogger.Singleton.Error(serialnumber);
+        UnityLogger.Singleton.Info("serialnumber is {0}", serialnumber);
         Dictionary<string, MVCS.Any> settings = new Dictionary<string, MVCS.Any>();
         settings["path.themes"] = MVCS.Any.FromString(Storage.ThemesPath);
         settings["path.assets"] = MVCS.Any.FromString(Storage.AssetsPath);
