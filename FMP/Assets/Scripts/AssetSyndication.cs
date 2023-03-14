@@ -18,6 +18,7 @@ public class AssetSyndication
             public string file = "";
             public ulong size = 0;
             public string hash = "";
+            public string url = "";
         }
         public List<Entry> entries = new List<Entry>();
     }
@@ -170,7 +171,10 @@ public class AssetSyndication
                         continue;
                     file = new FileTask();
                     fileTasks_.Add(file);
-                    file.url = String.Format("{0}/{1}", storageAddress, entry.file);
+                    if (string.IsNullOrEmpty(entry.url))
+                        file.url = String.Format("{0}/{1}", storageAddress, entry.file);
+                    else
+                        file.url = entry.url;
                     file.saveAs = entry.file;
                     file.size = entry.size;
                     file.hash = entry.hash;
