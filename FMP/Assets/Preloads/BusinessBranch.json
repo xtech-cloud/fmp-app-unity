@@ -1,4 +1,8 @@
 {
     "AppKey": "",
-    "AppSecret": ""
+    "AppSecret": "",
+    "StorageAddress": "http://localhost:18000",
+    "StorageVendorRootDir": "fmp.vendor/unity",
+    "StorageAssloudRootDir": "fmp.assloud",
+    "BuildVersion": "b1"
 }

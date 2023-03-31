@@ -18,13 +18,20 @@ public class LauncherBehaviour : MonoBehaviour
     {
         UnityLogger.Singleton.Info("########### Enter Launcher Scene");
 
-        if (null != businessBranch)
+        if (null == businessBranch)
         {
-            string text = businessBranch.text;
-            var schema = JsonConvert.DeserializeObject<BusinessBranch.Schema>(text);
-            BusinessBranch.Security.RewriteAppKey(schema.AppKey);
-            BusinessBranch.Security.RewriteAppSecret(schema.AppSecret);
+            UnityLogger.Singleton.Error("BusinessBranch is mission");
+            yield break;
         }
+
+        string text = businessBranch.text;
+        var schema = JsonConvert.DeserializeObject<BusinessBranch.Schema>(text);
+        BusinessBranch.Security.RewriteAppKey(schema.AppKey);
+        BusinessBranch.Security.RewriteAppSecret(schema.AppSecret);
+        BusinessBranch.Security.RewriteStorageAddress(schema.StorageAddress);
+        BusinessBranch.Security.RewriteVendorRootDir(schema.StorageVendorRootDir);
+        BusinessBranch.Security.RewriteAssloudRootDir(schema.StorageAssloudRootDir);
+        BusinessBranch.Build.RewriteVersion(schema.BuildVersion);
 
 
         if (RuntimePlatform.WebGLPlayer == Constant.Platform)
@@ -42,7 +49,7 @@ public class LauncherBehaviour : MonoBehaviour
         Storage.mode = Storage.Mode.Browser;
         string vendorUuid = QueryVendor();
         UnityLogger.Singleton.Info("vendor is {0}", vendorUuid);
-        if(string.IsNullOrEmpty(vendorUuid))
+        if (string.IsNullOrEmpty(vendorUuid))
         {
             yield return launcherStandard();
             yield break;
