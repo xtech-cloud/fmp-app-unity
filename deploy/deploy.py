@@ -81,7 +81,7 @@ def backup():
     try:
         shutil.copy("../FMP/ProjectSettings/ProjectSettings.asset", "./_tmp")
         shutil.copy("../FMP/Assets/AppData/icon.png", "./_tmp")
-        shutil.copy("../FMP/Assets/Scripts/BusinessBranch.cs", "./_tmp")
+        shutil.copy("../FMP/Assets/Preloads/BusinessBranch.json", "./_tmp")
         shutil.copy("../FMP/Packages/manifest.json", "./_tmp")
         shutil.copy("../FMP/Packages/packages-lock.json", "./_tmp")
     except Exception as e:
@@ -98,7 +98,7 @@ def restore():
         )
         shutil.copy("./_tmp/icon.png", "../FMP/Assets/AppData/icon.png")
         shutil.copy(
-            "./_tmp/BusinessBranch.cs", "../FMP/Assets/Scripts/BusinessBranch.cs"
+            "./_tmp/BusinessBranch.json", "../FMP/Assets/Preloads/BusinessBranch.json"
         )
         shutil.copy("./_tmp/manifest.json", "../FMP/Packages/manifest.json")
         shutil.copy("./_tmp/packages-lock.json", "../FMP/Packages/packages-lock.json")
@@ -158,8 +158,8 @@ def build(_company, _product, _buildParameter, _bits, _output):
         "{}/{}/icon.png".format(branch_dir, _product), "../FMP/Assets/AppData/icon.png"
     )
     shutil.copy(
-        "{}/{}/BusinessBranch.cs".format(branch_dir, _product),
-        "../FMP/Assets/Scripts/BusinessBranch.cs",
+        "{}/{}/BusinessBranch.json".format(branch_dir, _product),
+        "../FMP/Assets/Preloads/BusinessBranch.json",
     )
     if os.path.exists("{}/{}/Packages".format(branch_dir, _product)):
         shutil.copy(

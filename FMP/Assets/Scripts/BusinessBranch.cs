@@ -49,9 +49,6 @@ namespace BusinessBranch
         }
     }
 
-    /// <summary>
-    /// 配置文件结构，主要用于在BusinessBranch被编译成dll的时候，以外部文件形式
-    /// </summary>
     public class Schema
     {
         public string AppKey { get; set; } = "";
