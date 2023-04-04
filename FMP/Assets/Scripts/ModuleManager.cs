@@ -27,6 +27,7 @@ public class ModuleManager
     }
 
     public Action<int> OnProgressChanged { get; set; }
+    public Action<int> OnSubProgressChanged { get; set; }
     public Action<string, string> OnTipChanged { get; set; }
     public Action OnBootFinish { get; set; }
 
@@ -385,6 +386,8 @@ public class ModuleManager
         UnityLogger.Singleton.Info("Boot the step {0}_{1}", moduleFile, step.org, step.module);
         OnTipChanged("boot", string.Format("{0}_{1}", step.org, step.module));
 
+        OnSubProgressChanged(0);
+
         Module module;
         if (!modules_.TryGetValue(moduleFile, out module))
         {
@@ -406,7 +409,7 @@ public class ModuleManager
 
     private void handleBootStepProgress(int _percentage)
     {
-        //Debug.Log(_percentage);
+        OnSubProgressChanged(_percentage);
     }
 
     private void handleBootStepFinish(string _module)

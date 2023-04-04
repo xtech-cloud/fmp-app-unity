@@ -25,6 +25,7 @@ public class StartupBehaviour : MonoBehaviour
     public GameObject bootloader;
     public Text textBootloaderTip;
     public Text textBootloaderUpgress;
+    public Text textBootloaderSubUpgress;
     public Font mainFont;
     public TextAsset startupTip;
 
@@ -40,6 +41,7 @@ public class StartupBehaviour : MonoBehaviour
         bootloader.SetActive(true);
         textBootloaderTip.text = "";
         textBootloaderUpgress.text = "";
+        textBootloaderSubUpgress.text = "";
 
         Vendor activeVendor = VendorManager.Singleton.active;
 
@@ -53,12 +55,18 @@ public class StartupBehaviour : MonoBehaviour
         moduleManager = ModuleManager.Singleton;
         moduleManager.OnTipChanged = (_category, _tip) => textBootloaderTip.text = string.Format(uiTip_[_category], _tip);
         moduleManager.OnProgressChanged = (_percentage) => textBootloaderUpgress.text = _percentage.ToString();
+        moduleManager.OnSubProgressChanged = (_percentage) =>
+        {
+            textBootloaderSubUpgress.gameObject.SetActive(0 != _percentage);
+            textBootloaderSubUpgress.text = _percentage.ToString();
+        };
         moduleManager.OnBootFinish = () => bootloader.SetActive(false);
+        textBootloaderSubUpgress.gameObject.SetActive(false);
 
-        if(RuntimePlatform.WebGLPlayer == Constant.Platform)
+        if (RuntimePlatform.WebGLPlayer == Constant.Platform)
         {
             var go = Resources.Load<GameObject>("__ModulesExport__");
-            if(null != go)
+            if (null != go)
             {
                 GameObject.Instantiate(go);
             }
