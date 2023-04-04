@@ -90,11 +90,17 @@ public class ModuleManager
     {
         totalBootLength_ = 0;
         finishedBootLength_ = 0;
-        foreach (var dependency in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
-        {
-            // config, catalog, uab, plugin, reference 
-            totalBootLength_ += 5;
-        }
+        // config
+        totalBootLength_ += VendorManager.Singleton.active.schema.ModuleConfigS.Count;
+        // catalog
+        totalBootLength_ += VendorManager.Singleton.active.schema.ModuleCatalogS.Count;
+        // uab
+        totalBootLength_ += VendorManager.Singleton.active.dependencyConfig.schema.body.references.Length;
+        // plugins
+        totalBootLength_ += VendorManager.Singleton.active.dependencyConfig.schema.body.plugins.Length;
+        // references
+        totalBootLength_ += VendorManager.Singleton.active.dependencyConfig.schema.body.references.Length;
+
         foreach (var step in VendorManager.Singleton.active.bootloaderConfig.schema.steps)
         {
             totalBootLength_ += step.length;
@@ -174,72 +180,30 @@ public class ModuleManager
     private IEnumerator loadConfigs()
     {
         var storage = new ModuleStorage();
-        if (VendorManager.Singleton.active.schema.ModuleCatalogS.Count != 0)
+        foreach (var pair in VendorManager.Singleton.active.schema.ModuleConfigS)
         {
-            foreach (var pair in VendorManager.Singleton.active.schema.ModuleConfigS)
-            {
-                string value = Encoding.UTF8.GetString(Convert.FromBase64String(pair.Value));
-                UnityLogger.Singleton.Trace("load config of {0} success", pair.Key);
-                configs[string.Format("{0}.xml", pair.Key)] = value;
-                finishedBootLength_ += 1;
-                updateProgress();
-                OnTipChanged("config", pair.Key);
-            }
-        }
-        else
-        {
-            foreach (var reference in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
-            {
-                UnityLogger.Singleton.Info("load config of {0}_{1}", reference.org, reference.module);
-                yield return storage.LoadConfigFromVendor(reference.org, reference.module, reference.version);
-                if (200 != storage.statusCode)
-                {
-                    UnityLogger.Singleton.Error(storage.error);
-                    success = false;
-                    yield break;
-                }
-                UnityLogger.Singleton.Trace("load config of {0}_{1} success", reference.org, reference.module);
-                configs[string.Format("{0}_{1}.xml", reference.org, reference.module)] = storage.config;
-                finishedBootLength_ += 1;
-                updateProgress();
-                OnTipChanged("config", string.Format("{0}_{1}", reference.org, reference.module));
-            }
+            string value = Encoding.UTF8.GetString(Convert.FromBase64String(pair.Value));
+            UnityLogger.Singleton.Trace("load config of {0} success", pair.Key);
+            configs[string.Format("{0}.xml", pair.Key)] = value;
+            finishedBootLength_ += 1;
+            updateProgress();
+            OnTipChanged("config", pair.Key);
+            yield return new WaitForEndOfFrame();
         }
     }
 
     private IEnumerator loadCatalogs()
     {
         var storage = new ModuleStorage();
-        if (VendorManager.Singleton.active.schema.ModuleCatalogS.Count != 0)
+        foreach (var pair in VendorManager.Singleton.active.schema.ModuleCatalogS)
         {
-            foreach (var pair in VendorManager.Singleton.active.schema.ModuleCatalogS)
-            {
-                string value = Encoding.UTF8.GetString(Convert.FromBase64String(pair.Value));
-                UnityLogger.Singleton.Trace("load catalog of {0} success", pair.Key);
-                configs[string.Format("{0}.json", pair.Key)] = value;
-                finishedBootLength_ += 1;
-                updateProgress();
-                OnTipChanged("catalog", pair.Key);
-            }
-        }
-        else
-        {
-            foreach (var reference in VendorManager.Singleton.active.dependencyConfig.schema.body.references)
-            {
-                UnityLogger.Singleton.Info("load catalog of {0}_{1}", reference.org, reference.module);
-                yield return storage.LoadCatalogFromVendor(reference.org, reference.module, reference.version);
-                if (200 != storage.statusCode)
-                {
-                    UnityLogger.Singleton.Error(storage.error);
-                    success = false;
-                    yield break;
-                }
-                UnityLogger.Singleton.Trace("load catalog of {0}_{1} success", reference.org, reference.module);
-                configs[string.Format("{0}_{1}.json", reference.org, reference.module)] = storage.catalog;
-                finishedBootLength_ += 1;
-                updateProgress();
-                OnTipChanged("catalog", string.Format("{0}_{1}", reference.org, reference.module));
-            }
+            string value = Encoding.UTF8.GetString(Convert.FromBase64String(pair.Value));
+            UnityLogger.Singleton.Trace("load catalog of {0} success", pair.Key);
+            configs[string.Format("{0}.json", pair.Key)] = value;
+            finishedBootLength_ += 1;
+            updateProgress();
+            OnTipChanged("catalog", pair.Key);
+            yield return new WaitForEndOfFrame();
         }
     }
 
@@ -411,7 +375,7 @@ public class ModuleManager
     {
         if (currentBootStep_ >= VendorManager.Singleton.active.bootloaderConfig.schema.steps.Length)
         {
-            UnityLogger.Singleton.Info("All steps are finished");
+            UnityLogger.Singleton.Info("{0}/{1}, All steps are finished", finishedBootLength_, totalBootLength_);
             OnBootFinish();
             return;
         }
