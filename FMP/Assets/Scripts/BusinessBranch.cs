@@ -53,9 +53,9 @@ namespace BusinessBranch
     {
         public string AppKey { get; set; } = "";
         public string AppSecret { get; set; } = "";
-        public string StorageAddress { get; private set; } = "http://localhost:9000";
-        public string StorageVendorRootDir { get; private set; } = "fmp.vendor/unity";
-        public string StorageAssloudRootDir { get; private set; } = "fmp.assloud";
-        public string BuildVersion { get; private set; } = "b1";
+        public string StorageAddress { get; set; } = "http://localhost:9000";
+        public string StorageVendorRootDir { get; set; } = "fmp.vendor/unity";
+        public string StorageAssloudRootDir { get; set; } = "fmp.assloud";
+        public string BuildVersion { get; set; } = "b0";
     }
 }
