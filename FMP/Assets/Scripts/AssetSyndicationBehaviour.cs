@@ -168,7 +168,7 @@ public class AssetSyndicationBehaviour : MonoBehaviour
         if (AssetSyndication.ErrorCode.OK != assetSyndication.errorCode)
         {
             //检查阶段有错误
-            UnityLogger.Singleton.Error("check assets has error: {0}", assetSyndication.errorCode.ToString());
+            UnityLogger.Singleton.Error("check assets has error: {0}, message: {1}", assetSyndication.errorCode.ToString(), assetSyndication.errorMessage);
             if (updateStrategy_.Equals("manual"))
             {
                 // 手动模式弹出错误提示
@@ -219,7 +219,7 @@ public class AssetSyndicationBehaviour : MonoBehaviour
         // 有错误
         if (AssetSyndication.ErrorCode.OK != assetSyndication.errorCode)
         {
-            UnityLogger.Singleton.Error("download has error: {0}", assetSyndication.errorCode.ToString());
+            UnityLogger.Singleton.Error("download has error:{0}, message:{1}", assetSyndication.errorCode.ToString(), assetSyndication.errorMessage);
             if (updateStrategy_.Equals("manual"))
             {
                 // 手动模式弹出错误提示

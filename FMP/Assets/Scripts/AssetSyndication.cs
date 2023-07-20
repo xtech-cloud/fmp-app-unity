@@ -52,6 +52,7 @@ public class AssetSyndication
 
 
     public ErrorCode errorCode { get; private set; }
+    public string errorMessage { get; private set; } = "";
     public ulong updateTotalSize { get; private set; } = 0;
     public ulong updateFinishedSize { get; private set; } = 0;
     public string updateEntryHash { get; private set; } = "";
@@ -106,6 +107,7 @@ public class AssetSyndication
     public IEnumerator CheckAssets()
     {
         errorCode = ErrorCode.OK;
+        errorMessage = "";
         updateTotalSize = 0;
         updateFinishedSize = 0;
         updateEntryHash = "";
@@ -135,7 +137,7 @@ public class AssetSyndication
                 yield return uwr.SendWebRequest();
                 if (uwr.result != UnityWebRequest.Result.Success)
                 {
-                    UnityLogger.Singleton.Error(uwr.error);
+                    errorMessage = uwr.error;
                     errorCode = ErrorCode.MANIFEST_NETWORK_ERROR;
                     yield break;
                 }
@@ -149,14 +151,15 @@ public class AssetSyndication
                 }
                 catch (Exception ex)
                 {
-                    UnityLogger.Singleton.Exception(ex);
+                    errorMessage = ex.Message;
                     errorCode = ErrorCode.MANIFEST_PARSE_ERROR;
+                    UnityLogger.Singleton.Exception(ex);
                     yield break;
                 }
 
                 if (null == manifest)
                 {
-                    UnityLogger.Singleton.Error("manifest is null, maybe convert from json is failed");
+                    errorMessage = "manifest is null, maybe convert from json is failed";
                     errorCode = ErrorCode.MANIFEST_PARSE_ERROR;
                     yield break;
                 }
@@ -203,6 +206,7 @@ public class AssetSyndication
     public IEnumerator DownloadAssets()
     {
         errorCode = ErrorCode.OK;
+        errorMessage = "";
         yield return downloadAssets();
     }
 
@@ -236,13 +240,14 @@ public class AssetSyndication
         yield return fileWebRequest_.SendWebRequest();
         if (fileWebRequest_.result != UnityWebRequest.Result.Success)
         {
-            UnityLogger.Singleton.Error(fileWebRequest_.error);
+            errorMessage = fileWebRequest_.error;
             errorCode = ErrorCode.ENTRY_NETWORK_ERROR;
             yield break;
         }
         if (task.size != fileWebRequest_.downloadedBytes)
         {
             errorCode = ErrorCode.ENTRY_SIZE_ERROR;
+            errorMessage = string.Format("Entry size not matched,  wanted {0} but downloaded {1}", task.size, fileWebRequest_.downloadedBytes);
             yield break;
         }
         // 保存文件的hash值
