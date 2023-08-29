@@ -166,18 +166,21 @@ public class AssetSyndication
 
                 foreach (var entry in manifest.entries)
                 {
+                    string url;
+                    if (string.IsNullOrEmpty(entry.url))
+                        url = String.Format("{0}/{1}", storageAddress, entry.file);
+                    else
+                        url = entry.url;
+
                     var file = fileTasks_.Find((_item) =>
                     {
-                        return _item.url.Remove(0, storageAddress.Length + 1) == entry.file;
+                        return _item.url == url;
                     });
                     if (null != file)
                         continue;
                     file = new FileTask();
                     fileTasks_.Add(file);
-                    if (string.IsNullOrEmpty(entry.url))
-                        file.url = String.Format("{0}/{1}", storageAddress, entry.file);
-                    else
-                        file.url = entry.url;
+                    file.url = url;
                     file.saveAs = entry.file;
                     file.size = entry.size;
                     file.hash = entry.hash;
