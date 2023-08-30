@@ -172,16 +172,19 @@ public class AssetSyndication
                     else
                         url = entry.url;
 
+                    //TODO 优化同一url对用多个saveAs
+                    /*
                     var file = fileTasks_.Find((_item) =>
                     {
-                        return _item.url == url;
+                        return _item.hash == entry.hash;
                     });
                     if (null != file)
                     {
-                        UnityLogger.Singleton.Info("found a exists task, the entry is file:{0} hash:{1} url:{2}", entry.file, entry.hash, entry.url);
+                        UnityLogger.Singleton.Warning("found a exists task, the entry is file:{0} hash:{1} url:{2}", file.url, file.hash, .url);
                         continue;
                     }
-                    file = new FileTask();
+                    */
+                    var file = new FileTask();
                     fileTasks_.Add(file);
                     file.url = url;
                     file.saveAs = entry.file;
