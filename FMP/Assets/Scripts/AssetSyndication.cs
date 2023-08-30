@@ -177,7 +177,10 @@ public class AssetSyndication
                         return _item.url == url;
                     });
                     if (null != file)
+                    {
+                        UnityLogger.Singleton.Info("found a exists task, the entry is file:{0} hash:{1} url:{2}", entry.file, entry.hash, entry.url);
                         continue;
+                    }
                     file = new FileTask();
                     fileTasks_.Add(file);
                     file.url = url;
