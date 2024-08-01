@@ -101,6 +101,7 @@ public class StartupBehaviour : MonoBehaviour
         settings["canvas.main"] = MVCS.Any.FromObject(mainCanvas);
         settings["world.main"] = MVCS.Any.FromObject(mainWorld);
         settings["font.main"] = MVCS.Any.FromObject(mainFont);
+        settings["preloads"] = MVCS.Any.FromObject(new Dictionary<string, object>());
         foreach (var pair in moduleManager.uabs)
         {
             settings[string.Format("uab.{0}", pair.Key)] = MVCS.Any.FromObject(pair.Value);
